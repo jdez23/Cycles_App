@@ -1,0 +1,54 @@
+[
+{
+  "model": "sessions.session",
+  "pk": "ywxoyabzf80wmdogqkp4k7qbrqxk8lf0",
+  "fields": {
+    "session_data": ".eJxVjMsOwiAQRf-FtSG8BqhL934DgWGQqoGktCvjv2uTLnR7zzn3xULc1hq2QUuYMzszyU6_W4r4oLaDfI_t1jn2ti5z4rvCDzr4tWd6Xg7376DGUb91EeCd0kaWlLLAJAwaoZWy0muYkvRmAl_QGVIoPYAEchaQiqBiMQr2_gC-gTc8:1m3YKw:lyVf6fAoqHt-vQO3nYaucEFCy4EleNf30vXT24P7FIM",
+    "expire_date": "2021-07-28T06:25:38.870Z"
+  }
+},
+{
+  "model": "sites.site",
+  "fields": {
+    "domain": "example.com",
+    "name": "example.com"
+  }
+},
+{
+  "model": "users.user",
+  "fields": {
+    "password": "pbkdf2_sha256$260000$B8NyDkABs9klwmoLlmw6k3$lLrhDl/kYU3UFCSLXeBUsgfi+KVcsJpsQtP1uaxzBI4=",
+    "last_login": "2021-07-14T06:25:38.866Z",
+    "is_superuser": true,
+    "first_name": "",
+    "last_name": "",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2021-07-14T06:25:20.394Z",
+    "username": "jessehernandez",
+    "email": "jhernandez12321@gmail.com",
+    "is_private": false,
+    "small_bio": null,
+    "location": null,
+    "distance": 5,
+    "gender": null,
+    "header_pic": "",
+    "avi_pic": "",
+    "about": null,
+    "is_artist": false,
+    "art": null,
+    "genre": null,
+    "display_card": false,
+    "instagram": null,
+    "facebook": null,
+    "twitter": null,
+    "snapchat": null,
+    "youtube": null,
+    "tik_tok": null,
+    "spotify": null,
+    "apple_music": null,
+    "groups": [],
+    "user_permissions": []
+  }
+}
+]
