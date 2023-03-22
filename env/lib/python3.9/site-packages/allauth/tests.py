@@ -12,6 +12,8 @@ from django.test import RequestFactory, TestCase
 from django.utils.http import base36_to_int, int_to_base36
 from django.views import csrf
 
+from allauth import app_settings
+
 from . import utils
 
 
@@ -56,7 +58,7 @@ class mocked_response:
                     return self.responses.pop(0)
                 return f(*args, **kwargs)
 
-            return new_f
+            return Mock(side_effect=new_f)
 
         requests.get = mockable_request(requests.get)
         requests.post = mockable_request(requests.post)
@@ -170,15 +172,19 @@ class BasicTests(TestCase):
         self.assertEqual(deserialized.bb_empty, b"")
 
     def test_build_absolute_uri(self):
+        request = None
+        if not app_settings.SITES_ENABLED:
+            request = self.factory.get("/")
+            request.META["SERVER_NAME"] = "example.com"
         self.assertEqual(
-            utils.build_absolute_uri(None, "/foo"), "http://example.com/foo"
+            utils.build_absolute_uri(request, "/foo"), "http://example.com/foo"
         )
         self.assertEqual(
-            utils.build_absolute_uri(None, "/foo", protocol="ftp"),
+            utils.build_absolute_uri(request, "/foo", protocol="ftp"),
             "ftp://example.com/foo",
         )
         self.assertEqual(
-            utils.build_absolute_uri(None, "http://foo.com/bar"),
+            utils.build_absolute_uri(request, "http://foo.com/bar"),
             "http://foo.com/bar",
         )
 

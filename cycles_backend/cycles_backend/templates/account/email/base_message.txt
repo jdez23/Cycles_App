@@ -1,0 +1,7 @@
+{% load i18n %}{% autoescape off %}{% blocktrans %}Hello {{ username }}!{% endblocktrans %}
+
+{% block content %}{% endblock %}
+
+{% blocktrans %}Thank you for using Cycles!
+{% endblocktrans %}
+{% endautoescape %}

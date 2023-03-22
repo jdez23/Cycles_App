@@ -1,0 +1,3 @@
+[console_scripts]
+idb = idb.cli.main:main
+

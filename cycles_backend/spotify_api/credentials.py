@@ -1,3 +1,5 @@
-CLIENT_ID = '3f61f84796f34db0bb86f76c99adbc37'
-CLIENT_SECRET = '9c3519e8e1a4451ba95d9332af515f9d'
-REDIRECT_URL = 'cycles://'
+import os
+
+CLIENT_ID = os.environ.get('SPOTIFY_CLIENT_ID')
+CLIENT_SECRET = os.environ.get('SPOTIFY_CLIENT_SECRET')
+REDIRECT_URL = os.environ.get('SPOTIFY_REDIRECT_URL')

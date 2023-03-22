@@ -12,6 +12,9 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 
 import os
 from pathlib import Path
+import django_heroku
+import dj_database_url
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,17 +24,20 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-==3r#!c(szh5ep&vs5$qm2hh6@8nnb*&v-&s!5$a$opt3a#fy3'
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.ngrok.io']
+
+CSRF_TRUSTED_ORIGINS = ['https://*.ngrok.io', 'https://*.127.0.0.1']
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    "daphne",
     "corsheaders",
 
     'django.contrib.admin',
@@ -55,20 +61,22 @@ INSTALLED_APPS = [
 
     'users',
     'feed',
-    'dm',
     'notifications',
     'spotify_api',
+    'firebase_auth'
 ]
 
 SITE_ID = 1
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
+        'firebase_auth.authentication.FirebaseAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
-    ]
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20
 }
 
 MIDDLEWARE = [
@@ -84,7 +92,8 @@ MIDDLEWARE = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8081"
+    "http://localhost:8081",
+    "http://localhost:8082"
 ]
 
 ROOT_URLCONF = 'cycles_backend.urls'
@@ -94,7 +103,9 @@ AUTH_USER_MODEL = 'users.User'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            os.path.join(BASE_DIR, 'cycles_backend/templates')
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -108,21 +119,30 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'cycles_backend.wsgi.application'
+ASGI_APPLICATION = 'cycles_backend.asgi.application'
 
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'cycles_studios',
-        'HOST': 'localhost',
-        'PORT': '5432',
-        'USER': 'postgres',
-        'PASSWORD': 'Starwars12321',
-    }
+    'default': dj_database_url.parse(os.environ.get('DATABASE_URL')),
 }
+
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'NAME': env('DATABASE_NAME'),
+#         'HOST': env('DATABASE_HOST'),
+#         'PORT': env('DATABASE_PORT'),
+#         'USER': env('DATABASE_USER'),
+#         'PASSWORD': get_secret('db_pass'),
+#         'OPTIONS': {
+#             'isolation_level': 'repeatable read',
+#         }
+#     }
+# }
 
 
 # Password validation
@@ -143,13 +163,25 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTHENTICATION_BACKENDS = [
+    'allauth.account.auth_backends.AuthenticationBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+ACCOUNT_EMAIL_REQUIRED = True
+
+EMAIL_HOST = os.environ.get('EMAIL_HOST')
+EMAIL_USE_TLS = True
+EMAIL_PORT = os.environ.get('EMAIL_PORT')
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 
-REST_AUTH_REGISTER_SERIALIZERS = {
-    'REGISTER_SERIALIZER': 'users.serializers.RegistrationSerializer',
-}
+# REST_AUTH_SERIALIZERS = {
+#     'TOKEN_SERIALIZER': 'users.serializers.TokenSerializer'
+# }
 
 
 # Internationalization
@@ -158,6 +190,8 @@ REST_AUTH_REGISTER_SERIALIZERS = {
 LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'America/Los_Angeles'
+
+DATETIME_FORMAT = "%m-%d - %M:%S"
 
 USE_I18N = True
 
@@ -177,4 +211,23 @@ STATIC_URL = '/static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-MEDIA_URL = '/media/'
+MEDIA_URL = os.environ.get('MEDIA_URL')
+
+DEFAULT_FILE_STORAGE = 'storages.backend.gcloud.GoogleCloudStorage'
+GS_BUCKET_NAME = os.environ.get('GS_BUCKET_NAME')
+GS_PROJECT_ID = os.environ.get('GS_PROJECT_ID')
+GS_LOCATION = os.environ.get('GS_LOCATION')
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
+}
+
+django_heroku.settings(locals())
+
+FIREBASE_CONFIG = os.path.join(BASE_DIR, 'firebase-config.json')
+GOOGLE_APPLICATION_CREDENTIALS = os.environ["GOOGLE_APPLICATION_CREDENTIALS"]

@@ -20,8 +20,6 @@
     "password": "pbkdf2_sha256$260000$B8NyDkABs9klwmoLlmw6k3$lLrhDl/kYU3UFCSLXeBUsgfi+KVcsJpsQtP1uaxzBI4=",
     "last_login": "2021-07-14T06:25:38.866Z",
     "is_superuser": true,
-    "first_name": "",
-    "last_name": "",
     "is_staff": true,
     "is_active": true,
     "date_joined": "2021-07-14T06:25:20.394Z",

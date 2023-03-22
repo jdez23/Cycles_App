@@ -1,11 +1,7 @@
 from django.utils import timezone
-
 from datetime import timedelta
-
 from .credentials import *
-
 from requests import post, get
-
 from .models import SpotifyToken
 
 BASE_URL = "https://api.spotify.com/"
@@ -19,7 +15,7 @@ def get_user_tokens(user):
         return None
 
 
-def update_or_create_user_tokens(user, access_token, refresh_token, expires_in, token_type):
+def update_or_create_user_tokens(user, spotify_username, access_token, refresh_token, expires_in, token_type):
     tokens = get_user_tokens(user)
     expires_in = timezone.now() + timedelta(seconds=expires_in)
 
@@ -31,7 +27,7 @@ def update_or_create_user_tokens(user, access_token, refresh_token, expires_in, 
         tokens.save(update_fields=['access_token',
                                    'refresh_token', 'expires_in', 'token_type'])
     else:
-        tokens = SpotifyToken(user=user, access_token=access_token,
+        tokens = SpotifyToken(user=user, spotify_username=spotify_username, access_token=access_token,
                               refresh_token=refresh_token, expires_in=expires_in, token_type=token_type)
         tokens.save()
 
@@ -50,16 +46,18 @@ def is_spotify_authenticated(user):
     tokens = get_user_tokens(user)
     if tokens:
         expiry = tokens.expires_in
-        if expiry <= timezone.now():
-            refresh_spotify_token(user)
-        return True
+        try:
+            if expiry <= timezone.now():
+                refresh_spotify_token(user)
+            return True
+        except:
+            False
     return False
 
 
 def refresh_spotify_token(user):
     refresh_token = get_user_tokens(user).refresh_token
-
-    print(refresh_token)
+    spotify_username = get_user_tokens(user).spotify_username
 
     response = post('https://accounts.spotify.com/api/token', data={
         'grant_type': 'refresh_token',
@@ -68,14 +66,14 @@ def refresh_spotify_token(user):
         'client_secret': CLIENT_SECRET,
     }).json()
 
-    print(response)
+    print('RES==:', response)
 
     access_token = response.get('access_token')
     expires_in = response.get('expires_in')
     token_type = response.get('token_type')
 
     update_or_create_user_tokens(
-        user, access_token, refresh_token, expires_in, token_type)
+        user, spotify_username, access_token, refresh_token, expires_in, token_type)
 
 
 def execute_spotify_api_request(user, endpoint, post_=False):
@@ -90,4 +88,4 @@ def execute_spotify_api_request(user, endpoint, post_=False):
     try:
         return response.json()
     except:
-        return{'Error': 'Issue with request'}
+        return {'Error': 'Issue with request'}
