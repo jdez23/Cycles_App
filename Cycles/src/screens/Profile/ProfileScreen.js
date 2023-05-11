@@ -119,144 +119,13 @@ const ProfileScreen = route => {
 
   const onFollowUser = () => {
     playlistContext?.followUser(props);
-    setIsFollowing('true');
+    setIsFollowing(true);
   };
 
   const onUnfollowUser = () => {
     playlistContext?.unfollowUser(props);
-    setIsFollowing('false');
+    setIsFollowing(false);
   };
-
-  // // Follow user
-  // const followUser = async () => {
-  //   const data = {
-  //     to_user: to_user.toString(),
-  //     title: 'Cycles',
-  //     body: 'followed you',
-  //   };
-  //   try {
-  //     await axios
-  //       .post(
-  //         'http://127.0.0.1:8000/users/following/',
-  //         [{currentUser: userID, toFollowUser: profileData.id}],
-  //         {
-  //           headers: {
-  //             'Content-Type': 'application/json',
-  //             Authorization: 'token ' + JSON.parse(state.token),
-  //           },
-  //         },
-  //       )
-  //       .then(res => {
-  //         setProfileData([res.data]);
-  //         ws.send(JSON.stringify(data));
-  //         // Send notificiation to user
-  //         try {
-  //           axios
-  //             .post(
-  //               'http://127.0.0.1:8000/notifications/message/',
-  //               {
-  //                 to_user: userID,
-  //                 title: 'Cycles',
-  //                 body: currentUser + ' followed you.',
-  //                 image: PlaylistData.playlist_cover,
-  //               },
-  //               {
-  //                 headers: {
-  //                   'Content-Type': 'application/json',
-  //                   Authorization: 'token ' + JSON.parse(state.token),
-  //                 },
-  //               },
-  //             )
-  //             .then(res => {
-  //               response = res.data;
-  //               console.log(response);
-  //             });
-  //         } catch (error) {
-  //           console.error(error);
-  //         }
-  //       });
-  //   } catch (error) {
-  //     console.error(error);
-  //   }
-  // };
-
-  // Unfollow user
-  // const unllowUser = async () => {
-  //   try {
-  //     await axios
-  //       .post(
-  //         'http://127.0.0.1:8000/users/following/',
-  //         [{currentUser: userID, toFollowUser: profileData.id}],
-  //         {
-  //           headers: {
-  //             'Content-Type': 'application/json',
-  //             Authorization: 'token ' + JSON.parse(state.token),
-  //           },
-  //         },
-  //       )
-  //       .then(res => {
-  //         setProfileData([res.data]);
-  //       });
-  //   } catch (error) {
-  //     console.error(error);
-  //   }
-  // };
-
-  //Fetch current users profile data
-
-  // // Get a users profile data
-  // const getProfileData = async () => {
-  //   const token = await RNSInfo.getItem('token', {});
-  //   try {
-  //     await axios
-  //       .get(`${BACKEND_URL}/users/user/${userID}/`, {
-  //         headers: {
-  //           'Content-Type': 'application/json',
-  //           Authorization: token,
-  //         },
-  //       })
-  //       .then(res => {
-  //         const profile_Data = res.data;
-  //         const followers = profile_Data.followers;
-  //         const followersID = followers.map(item => item.user);
-  //         if (followersID.toString().includes(authContext?.state?.user_id)) {
-  //           setIsFollowing('true');
-  //         } else {
-  //           setIsFollowing('false');
-  //         }
-  //         setProfileData([profile_Data]);
-  //       });
-  //   } catch (error) {
-  //     playlistContext?.dispatch({
-  //       type: 'error_1',
-  //       payload: 'Something went wrong. Please try again.',
-  //     });
-  //   }
-  // };
-
-  // //Fetch a users playlists
-  // const getPlaylistData = async () => {
-  //   const token = await RNSInfo.getItem('token', {});
-  //   try {
-  //     await axios
-  //       .get(`${BACKEND_URL}/feed/user-playlists/?id=${userID}`, {
-  //         headers: {
-  //           'Content-Type': 'application/json',
-  //           Authorization: token,
-  //         },
-  //       })
-  //       .then(res => {
-  //         const playlistData = res.data;
-  //         // console.log(playlistData);
-  //         setPlaylistData(playlistData);
-  //       });
-  //   } catch (error) {
-  //     playlistContext?.dispatch({
-  //       type: 'error_1',
-  //       payload: 'Something went wrong. Please try again.',
-  //     });
-  //   }
-  // };
 
   // Render profile data
   const renderProfileData = () => {
@@ -339,7 +208,7 @@ const ProfileScreen = route => {
                     alignSelf: 'center',
                     fontSize: 14,
                     color: 'white',
-                    fontWeight: 'bold',
+                    fontWeight: '500',
                   }}>
                   {playlistContext?.state?.userProfileData?.name}
                 </Text>
@@ -426,7 +295,7 @@ const ProfileScreen = route => {
                 alignItems: 'center',
                 marginVertical: 8,
               }}>
-              {!playlistContext?.state?.userProfileData?.spotify_url ? null : (
+              {playlistContext?.state?.userProfileData?.spotify_url ? (
                 <Pressable
                   style={{paddingRight: 6}}
                   onPress={() =>
@@ -449,7 +318,7 @@ const ProfileScreen = route => {
                     />
                   </View>
                 </Pressable>
-              )}
+              ) : null}
               <View>
                 {authContext?.state?.user_id === profileID.toString() ? (
                   <TouchableOpacity onPress={onEditProfile}>
@@ -525,8 +394,6 @@ const ProfileScreen = route => {
     <View
       key={item.id}
       style={{
-        // alignItems: 'center',
-        // backgroundColor: 'brown',
         flex: 1,
         marginHorizontal: 12,
       }}>
@@ -536,7 +403,7 @@ const ProfileScreen = route => {
           flexDirection: 'column',
           alignItems: 'center',
           width: window / 2 - 24,
-          // backgroundColor: 'darkgreen',
+          marginBottom: 8,
         }}>
         {item.playlist_cover ? (
           <Image

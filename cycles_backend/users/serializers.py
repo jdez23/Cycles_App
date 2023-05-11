@@ -15,9 +15,29 @@ class TokenSerializer(serializers.ModelSerializer):
 
 
 class SearchUserSerializer(serializers.ModelSerializer):
+    avi_pic = serializers.SerializerMethodField('get_avi_pic')
+
     class Meta:
         model = User
         fields = ('id', 'name', 'username', 'avi_pic')
+
+    def get_storage_client(self):
+        try:
+            return storage.Client.from_service_account_json(settings.GCS_CREDENTIALS)
+        except Exception as e:
+            raise ImproperlyConfigured(
+                "Error loading Google Cloud Storage client: {}".format(e)
+            )
+
+    def get_avi_pic(self, obj):
+        avi_pic = obj.avi_pic
+        if avi_pic:
+            client = self.get_storage_client()
+            bucket = client.bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(f"media/avi_images/{avi_pic}")
+            return blob.public_url
+        else:
+            return None
 
 
 class UserLoginSerializer(serializers.ModelSerializer):
@@ -29,7 +49,7 @@ class UserLoginSerializer(serializers.ModelSerializer):
 class UserRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('firebase_id', 'id', 'username')
+        fields = ('firebase_id', 'id', 'username', 'avi_pic')
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -57,7 +77,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_storage_client(self):
         try:
-            return storage.Client.from_service_account_json(settings.GOOGLE_APPLICATION_CREDENTIALS)
+            return storage.Client.from_service_account_json(settings.GCS_CREDENTIALS)
         except Exception as e:
             raise ImproperlyConfigured(
                 "Error loading Google Cloud Storage client: {}".format(e)
@@ -67,7 +87,7 @@ class UserSerializer(serializers.ModelSerializer):
         if obj.header_pic:
             client = self.get_storage_client()
             bucket = client.bucket(settings.GS_BUCKET_NAME)
-            blob = bucket.blob(str(obj.header_pic))
+            blob = bucket.blob(f"media/header_images/{obj.header_pic}")
             return blob.public_url
         else:
             return None
@@ -76,38 +96,65 @@ class UserSerializer(serializers.ModelSerializer):
         if obj.avi_pic:
             client = self.get_storage_client()
             bucket = client.bucket(settings.GS_BUCKET_NAME)
-            blob = bucket.blob(str(obj.avi_pic))
+            blob = bucket.blob(f"media/avi_images/{obj.avi_pic}")
             return blob.public_url
         else:
             return None
 
 
 class FollowSerializer(serializers.ModelSerializer):
-    # avi_pic = serializers.SerializerMethodField('get_avi_pic')
-    # username = serializers.SerializerMethodField('get_username')
+    avi_pic = serializers.SerializerMethodField('get_avi_pic')
+    username = serializers.SerializerMethodField('get_username')
+
+    def get_storage_client(self):
+        try:
+            return storage.Client.from_service_account_json(settings.GCS_CREDENTIALS)
+        except Exception as e:
+            raise ImproperlyConfigured(
+                "Error loading Google Cloud Storage client: {}".format(e)
+            )
 
     class Meta:
         model = Follow
         fields = '__all__'
 
-    # def get_username_from_user(self, follow):
-    #     username = follow.user.username
-    #     return username
+    def get_username(self, follow):
+        username = follow.user.username
+        return username
 
-    # def get_avi_pic(self, follow):
-    #     # request = self.context['request']
-    #     avi_pic = follow.user.avi_pic.url
-    #     return avi_pic
+    def get_avi_pic(self, follow):
+        avi_pic = follow.user.avi_pic
+        if avi_pic:
+            client = self.get_storage_client()
+            bucket = client.bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(f"media/avi_images/{avi_pic}")
+            return blob.public_url
+        else:
+            return None
 
 
 class FollowingSerializer(serializers.ModelSerializer):
-    # avi_pic = serializers.SerializerMethodField('get_avi_pic')
+    avi_pic = serializers.SerializerMethodField('get_avi_pic')
     username = serializers.SerializerMethodField('get_username')
     name = serializers.SerializerMethodField('get_name')
 
-    # def get_avi_pic(self, obj):
-    #     avi_pic = obj.following_user.avi_pic.url
-    #     return avi_pic
+    def get_storage_client(self):
+        try:
+            return storage.Client.from_service_account_json(settings.GCS_CREDENTIALS)
+        except Exception as e:
+            raise ImproperlyConfigured(
+                "Error loading Google Cloud Storage client: {}".format(e)
+            )
+
+    def get_avi_pic(self, obj):
+        avi_pic = obj.user.avi_pic
+        if avi_pic:
+            client = self.get_storage_client()
+            bucket = client.bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(f"media/avi_images/{avi_pic}")
+            return blob.public_url
+        else:
+            return None
 
     def get_username(self, obj):
         username = obj.following_user.username
@@ -123,7 +170,7 @@ class FollowingSerializer(serializers.ModelSerializer):
 
 
 class FollowerSerializer(serializers.ModelSerializer):
-    # avi_pic = serializers.SerializerMethodField('get_avi_pic')
+    avi_pic = serializers.SerializerMethodField('get_avi_pic')
     username = serializers.SerializerMethodField('get_username')
     name = serializers.SerializerMethodField('get_name')
 
@@ -131,9 +178,23 @@ class FollowerSerializer(serializers.ModelSerializer):
         model = Follow
         fields = "__all__"
 
-    # def get_avi_pic(self, obj):
-    #     avi_pic = obj['user_id'].avi_pic.url
-    #     return avi_pic
+    def get_storage_client(self):
+        try:
+            return storage.Client.from_service_account_json(settings.GCS_CREDENTIALS)
+        except Exception as e:
+            raise ImproperlyConfigured(
+                "Error loading Google Cloud Storage client: {}".format(e)
+            )
+
+    def get_avi_pic(self, obj):
+        avi_pic = obj.user.avi_pic
+        if avi_pic:
+            client = self.get_storage_client()
+            bucket = client.bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(f"media/avi_images/{avi_pic}")
+            return blob.public_url
+        else:
+            return None
 
     def get_username(self, obj):
         username = obj.user.username

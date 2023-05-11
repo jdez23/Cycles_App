@@ -35,12 +35,6 @@ import CommentsScreen from './src/screens/Comments/CommentsScreen';
 import FollowersList from './src/screens/FollowersList/FollowersList';
 import FollowingList from './src/screens/FollowingList/FollowingList';
 import ServicesScreen from './src/screens/ServicesScreen/ServicesScreen';
-import PushNotificationIOS from '@react-native-community/push-notification-ios';
-import envs from './Config/env';
-import {
-  notificationListener,
-  requestUserPermission,
-} from './src/firebaseMessaging/notificationHelper';
 import {Provider as PlaylistProvider} from './src/context/PlaylistContext';
 import {
   Provider as AuthProvider,
@@ -52,17 +46,15 @@ import {
 } from './src/context/NotifContext';
 
 const Stack = createNativeStackNavigator();
-// const WS_URL = envs.WS_URL;
 
 const MainFlow = () => {
-  useEffect(() => {
-    requestUserPermission();
-  }, []);
-
+  const authContext = useContext(AuthContext);
   return (
     <Stack.Navigator
       screenOptions={{headerShown: false}}
-      initialRouteName={'BottomBar'}>
+      initialRouteName={
+        authContext?.state?.username ? 'BottomBar' : 'OnBoardScreen'
+      }>
       <Stack.Screen name="BottomBar" component={BottomBar} />
       <Stack.Screen name="Playlist" component={Playlist} />
       <Stack.Screen name="EditProfile" component={EditProfile} />
@@ -73,6 +65,7 @@ const MainFlow = () => {
       <Stack.Screen name="FollowingList" component={FollowingList} />
       <Stack.Screen name="FollowersList" component={FollowersList} />
       <Stack.Screen name="ServicesScreen" component={ServicesScreen} />
+      <Stack.Screen name="OnBoardScreen" component={OnBoardScreen} />
     </Stack.Navigator>
   );
 };
@@ -84,7 +77,6 @@ const AuthFlow = () => {
       initialRouteName={'SignIn'}>
       <Stack.Screen name="SignIn" component={SignIn} />
       <Stack.Screen name="ConfirmCode" component={ConfirmCode} />
-      <Stack.Screen name="OnBoardScreen" component={OnBoardScreen} />
     </Stack.Navigator>
   );
 };
@@ -92,34 +84,10 @@ const AuthFlow = () => {
 function App() {
   const navigation = useNavigation();
   const authContext = useContext(AuthContext);
-  // const notifContext = useContext(NotifContext);
   const [isLoading, setIsLoading] = React.useState(true);
 
-  // console.log(`${WS_URL}/ws/notif-socket/?token=${authContext?.state?.token}`);
-
-  // useEffect(() => {
-  //   const ws = new WebSocket(
-  //     `wss://93d5-2600-1700-9758-7420-8054-4ff6-3840-2d84.ngrok.io/ws/notif-socket/?token=${authContext?.state?.token}`,
-  //   );
-  //   try {
-  //     ws.onopen = () => {
-  //       console.log('WebSocket connected');
-  //     };
-  //     ws.onerror = error => {
-  //       console.error('WebSocket error: ', error);
-  //     };
-
-  //     ws.onmessage = event => {
-  //       console.log('WebSocket message: ', event.data);
-  //       notifContext?.notifBadge();
-  //     };
-  //   } catch (e) {
-  //     console.error('error:', e);
-  //   }
-  // }, [notifContext?.state?.notifCount]);
-
   useEffect(() => {
-    SplashScreen.hide(); //hides the splash screen on app load.
+    SplashScreen.hide();
   }, []);
 
   // Gets notif when phone/app is on
@@ -164,7 +132,7 @@ function App() {
   return (
     <SafeAreaView style={styles.root}>
       <StatusBar barStyle="light-content" />
-      {authContext?.state?.user === 'true' ? <MainFlow /> : <AuthFlow />}
+      {authContext?.state?.token ? <MainFlow /> : <AuthFlow />}
     </SafeAreaView>
   );
 }

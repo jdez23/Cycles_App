@@ -1,5 +1,13 @@
 import React, {useContext, useState, useRef, useEffect} from 'react';
-import {SafeAreaView, StyleSheet, Text, View, Pressable} from 'react-native';
+import {
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  View,
+  Pressable,
+  Dimensions,
+  TouchableOpacity,
+} from 'react-native';
 import {TextInput} from 'react-native-gesture-handler';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Toast from 'react-native-root-toast';
@@ -16,18 +24,14 @@ const ConfirmCode = data => {
   const navigation = useNavigation();
   const [code, setCode] = useState('');
   const authContext = useContext(AuthContext);
-  const confirmation = authContext?.state.confirmNumber;
-  // console.log(state.confirmation);
+  const confirm = authContext.state.confirmation;
+
   const onBack = () => {
     navigation.goBack();
   };
+
   const onConfirmNumber = () => {
-    authContext?.confirmNumber({
-      params: {
-        code: code,
-        confirmation: confirmation,
-      },
-    });
+    authContext?.confirmNumber({confirm: confirm, code: code});
   };
 
   useEffect(() => {
@@ -35,7 +39,7 @@ const ConfirmCode = data => {
       setToast(
         Toast.show(authContext?.state?.errorMessage, {
           duration: Toast.durations.SHORT,
-          position: Toast.positions.TOP,
+          position: Toast.positions.CENTER,
           onHidden: () => authContext?.dispatch({type: 'clear_error_message'}),
         }),
       );
@@ -107,11 +111,11 @@ const ConfirmCode = data => {
           </View>
         </View>
         {code.length === 6 ? (
-          <Pressable onPress={() => onConfirmNumber()}>
+          <TouchableOpacity onPress={() => onConfirmNumber(code)}>
             <View style={styles.continueBox}>
               <Text style={styles.continueText}>Continue</Text>
             </View>
-          </Pressable>
+          </TouchableOpacity>
         ) : (
           <Pressable>
             <View style={styles.continueBoxEmpty}>
@@ -119,9 +123,9 @@ const ConfirmCode = data => {
             </View>
           </Pressable>
         )}
-        <Pressable onPress={() => authContext?.signInWithPhone(number)}>
+        <TouchableOpacity onPress={() => authContext?.signInWithPhone(number)}>
           <Text style={{color: 'white'}}>Resend code</Text>
-        </Pressable>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -130,7 +134,7 @@ const ConfirmCode = data => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#151515',
+    backgroundColor: '#0C0C0C',
   },
   text: {
     color: 'white',
@@ -173,7 +177,7 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   continueBox: {
-    backgroundColor: '#E04326',
+    backgroundColor: '#32D74B',
     width: 350,
     height: 45,
     alignItems: 'center',

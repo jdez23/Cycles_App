@@ -13,8 +13,9 @@ import requests
 
 # Create your views here.
 
-
 # (Post/Update) & Delete fcmToken
+
+
 class fcmTokenView(APIView):
     serializer_class = fcmTokenSerializer
     queryset = fcmToken.objects.all()
@@ -32,8 +33,12 @@ class fcmTokenView(APIView):
     def delete(self, request):
         try:
             user = self.request.user
-            token = fcmToken.objects.get(user=user)
-            return Response(token.delete(), status=status.HTTP_200_OK)
+            try:
+                token = fcmToken.objects.get(user=user)
+                if token:
+                    return Response(token.delete(), status=status.HTTP_200_OK)
+            except fcmToken.DoesNotExist:
+                return Response('no token', status=status.HTTP_200_OK)
         except:
             return Response({'error': 'An unexpected error occurred.'}, status=500)
 
@@ -58,63 +63,68 @@ class NotificationView(APIView):
 
             to_user = User.objects.get(id=to_user)
 
-            if type == 'follow':
-                follow = Follow.objects.get(id=follow)
-                notification = Notification(from_user=user, to_user=to_user, title=title,
-                                            image=image, body=body, type=type, follow=follow)
-            elif type == 'like':
-                like = Like.objects.get(id=like)
-                notification = Notification(from_user=user, to_user=to_user, title=title,
-                                            image=image, body=body, playlist_id=playlist_id, type=type, like=like)
-            elif type == 'comment':
-                comment = Comment.objects.get(id=comment)
-                notification = Notification(from_user=user, to_user=to_user, title=title,
-                                            image=image, body=body, playlist_id=playlist_id, type=type, comment=comment)
+            if user.id != to_user.id:
 
-            notification.save()
+                if type == 'follow':
+                    print(follow)
+                    follow = Follow.objects.get(id=follow)
+                    notification = Notification(from_user=user, to_user=to_user, title=title,
+                                                image='', body=body, type=type, follow=follow)
+                    notification.save()
 
-            try:
-                deviceToken = fcmToken.objects.get(user=to_user).token
-                print(deviceToken)
-                url = "https://fcm.googleapis.com/fcm/send"
+                elif type == 'like':
+                    like = Like.objects.get(id=like)
+                    notification = Notification(from_user=user, to_user=to_user, title=title,
+                                                image=image.name, body=body, playlist_id=playlist_id, type=type, like=like)
+                    notification.save()
 
-                payload = json.dumps({
-                    "data": {},
-                    "notification": {
-                        "title": title,
-                        "body": body
-                    },
-                    "to": deviceToken
-                })
-                headers = {
-                    'Authorization': 'key='+FCM_CREDENTIALS,
-                    'Content-Type': 'application/json'
-                }
+                elif type == 'comment':
+                    comment = Comment.objects.get(id=comment)
+                    notification = Notification(from_user=user, to_user=to_user, title=title,
+                                                image=image.name, body=body, playlist_id=playlist_id, type=type, comment=comment)
 
-                if deviceToken:
-                    response = requests.request(
-                        "POST", url, headers=headers, data=payload)
+                    notification.save()
 
-                else:
-                    print('no token')
-            except fcmToken.DoesNotExist:
-                None
+                try:
+                    deviceToken = fcmToken.objects.get(user=to_user).token
+                    url = "https://fcm.googleapis.com/fcm/send"
 
-            return Response(status=status.HTTP_201_CREATED)
+                    payload = json.dumps({
+                        "data": {},
+                        "notification": {
+                            "title": title,
+                            "body": body
+                        },
+                        "to": deviceToken
+                    })
+                    headers = {
+                        'Authorization': 'key='+FCM_CREDENTIALS,
+                        'Content-Type': 'application/json'
+                    }
+
+                    if deviceToken:
+                        requests.request(
+                            "POST", url, headers=headers, data=payload)
+
+                    else:
+                        None
+                except fcmToken.DoesNotExist:
+                    None
+
+                return Response(status=status.HTTP_201_CREATED)
+            return Response(status=200)
         except Exception as e:
-            print(str(e))
-            return JsonResponse({'error': str(e)}, status=500)
+            return JsonResponse(str(e), safe=False, status=500)
 
     def get(self, request):
         try:
             user = self.request.user
             notification = Notification.objects.filter(
-                to_user=user).order_by('-date')
+                to_user=user)
             serializer = NotificationSerializer(notification, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        except Exception as e:
-            print(e)
-            return Response({'error': str(e)}, status=500)
+        except:
+            return Response({'error': 'An unexpected error occurred.'}, status=500)
 
     def delete(self, request):
         try:

@@ -7,9 +7,7 @@ import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import context from './context';
 import envs from '../../Config/env';
 
-const BACKEND_URL = envs.DEV_URL;
-console.log(BACKEND_URL);
-// export const ngrokURL = BACKEND_URL;
+const BACKEND_URL = envs.PROD_URL;
 
 // Get Token from storage
 const getToken = async () => await RNSInfo.getItem('token', {});
@@ -114,12 +112,6 @@ const getCurrentUser = dispatch => async () => {
   }
 };
 
-// RNSInfo.deleteItem('token', {});
-// RNSInfo.deleteItem('user_id', {});
-// RNSInfo.deleteItem('username', {});
-// RNSInfo.deleteItem('user', {});
-// RNSInfo.deleteItem('fcmToken', {});
-
 const completeSignUp = dispatch => async data => {
   const formData = new FormData();
   const token = data.token;
@@ -130,6 +122,7 @@ const completeSignUp = dispatch => async data => {
     name: data.avi_pic,
   });
   formData.append('username', username.toLowerCase());
+  formData.append('token', token);
   try {
     const res = await axios.post(`${BACKEND_URL}/users/register/`, formData, {
       headers: {
@@ -150,6 +143,7 @@ const completeSignUp = dispatch => async data => {
         username: response?.username,
         user: 'true',
       });
+      return true;
     }
   } catch (error) {
     if (error.response.status === 400) {
@@ -248,11 +242,10 @@ const onGoogleButtonPress = dispatch => async () => {
   }
 };
 
-const signInWithPhone = dispatch => async number => {
+const signInWithPhone = dispatch => async data => {
   try {
-    const response = await firebase.auth().signInWithPhoneNumber(number);
-    const confirmationNum = response.verificationId;
-    dispatch({type: 'confirmation', payload: confirmationNum});
+    const confirm = await firebase.auth().signInWithPhoneNumber(data);
+    await dispatch({type: 'confirmation', payload: confirm});
   } catch (err) {
     dispatch({
       type: 'error_1',
@@ -262,14 +255,11 @@ const signInWithPhone = dispatch => async number => {
 };
 
 const confirmNumber = dispatch => async data => {
-  console.log('confirmation:', data.params.confirmation);
-  const code = data.params.code;
-  const confirmationa = data.params.confirmation;
+  const confirm = data.confirm;
   try {
-    confirmationa &&
-      (await confirmationa.confirm(code).then(res => {
-        console.log('------------', res.data);
-      }));
+    const res = await confirm.confirm(data.code);
+    const token = res.user.uid;
+    login(dispatch)(token);
   } catch (err) {
     dispatch({
       type: 'error_1',
@@ -281,23 +271,25 @@ const confirmNumber = dispatch => async data => {
 const signout = dispatch => async () => {
   const token = await getToken();
   try {
-    await axios.delete(`${BACKEND_URL}/notifications/fcmToken/`, {
+    const res = await axios.delete(`${BACKEND_URL}/notifications/fcmToken/`, {
       headers: {
         Authorization: token,
       },
     });
-    RNSInfo.deleteItem('token', {});
-    RNSInfo.deleteItem('user_id', {});
-    RNSInfo.deleteItem('username', {});
-    RNSInfo.deleteItem('user', {});
-    RNSInfo.deleteItem('fcmToken', {});
-    dispatch({
-      type: 'signout',
-      token: null,
-      user_id: null,
-      username: null,
-      user: 'false',
-    });
+    if (res.status === 200) {
+      RNSInfo.deleteItem('token', {});
+      RNSInfo.deleteItem('user_id', {});
+      RNSInfo.deleteItem('username', {});
+      RNSInfo.deleteItem('user', {});
+      RNSInfo.deleteItem('fcmToken', {});
+      dispatch({
+        type: 'signout',
+        token: null,
+        user_id: null,
+        username: null,
+        user: 'false',
+      });
+    }
   } catch (err) {
     dispatch({
       type: 'error_1',
@@ -349,11 +341,10 @@ const isSpotifyAuth = dispatch => async () => {
         Authorization: token,
       },
     });
-    console.log(isAuth.data);
     dispatch({type: 'spotifyAuth', payload: JSON.stringify(isAuth.data)});
     return JSON.stringify(isAuth.data);
   } catch (e) {
-    console.log(e);
+    null;
   }
 };
 

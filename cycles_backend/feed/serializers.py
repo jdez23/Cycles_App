@@ -45,14 +45,13 @@ class UserPlaylistSerializer(serializers.ModelSerializer):
         return username
 
     def get_avi_pic(self, playlist):
-        avi_pic = playlist.user.avi_pic.url
+        avi_pic = playlist.user.avi_pic
         credentials = service_account.Credentials.from_service_account_file(
-            os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
-        )
+            settings.GCS_CREDENTIALS)
         # Get the image URL from Google Cloud Storage
         client = storage.Client(credentials=credentials)
-        bucket = client.bucket('your-bucket-name')
-        blob = bucket.blob(avi_pic.image.name)
+        bucket = client.bucket(os.environ.get('GS_BUCKET_NAME'))
+        blob = bucket.blob(f"media/avi_images/{avi_pic}")
         url = blob.public_url
 
         return url
@@ -75,7 +74,7 @@ class PlaylistDetailSerializer(serializers.ModelSerializer):
         images = PlaylistImages.objects.filter(
             playlist=playlist)
         if images:
-            return PlaylistImagesSerializer(images, many=True).data
+            return GetPlaylistImagesSerializer(images, many=True).data
         else:
             return None
 
@@ -90,16 +89,24 @@ class PlaylistTracksSerializer(serializers.ModelSerializer):
 class PlaylistImagesSerializer(serializers.ModelSerializer):
     class Meta:
         model = PlaylistImages
-        fields = ["image"]
+        fields = "__all__"
 
-    def to_representation(self, instance):
+
+class GetPlaylistImagesSerializer(serializers.ModelSerializer):
+    images = serializers.SerializerMethodField('get_image')
+
+    class Meta:
+        model = PlaylistImages
+        fields = "__all__"
+
+    def get_image(self, data):
         credentials = service_account.Credentials.from_service_account_file(
-            os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
+            settings.GCS_CREDENTIALS
         )
         # Get the image URL from Google Cloud Storage
         client = storage.Client(credentials=credentials)
-        bucket = client.bucket('your-bucket-name')
-        blob = bucket.blob(instance.image.name)
+        bucket = client.bucket(os.environ.get('GS_BUCKET_NAME'))
+        blob = bucket.blob(f"media/playlist_images/{data.image}")
         url = blob.public_url
 
         return url
@@ -125,14 +132,14 @@ class FollowingPlaylistSerializer(serializers.ModelSerializer):
         return location
 
     def get_avi_pic(self, playlist):
-        avi_pic = playlist.user.avi_pic.url
+        avi_pic = playlist.user.avi_pic
         credentials = service_account.Credentials.from_service_account_file(
-            os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
+            settings.GCS_CREDENTIALS
         )
         # Get the image URL from Google Cloud Storage
         client = storage.Client(credentials=credentials)
-        bucket = client.bucket('your-bucket-name')
-        blob = bucket.blob(avi_pic.image.name)
+        bucket = client.bucket(os.environ.get('GS_BUCKET_NAME'))
+        blob = bucket.blob(f"media/avi_images/{avi_pic}")
         url = blob.public_url
 
         return url
@@ -142,7 +149,7 @@ class FollowingPlaylistSerializer(serializers.ModelSerializer):
             first_image = PlaylistImages.objects.filter(
                 playlist=playlist).first()
             if first_image:
-                return PlaylistImagesSerializer(first_image).data
+                return GetPlaylistImagesSerializer(first_image).data
             else:
                 return None
         except PlaylistImages.DoesNotExist:
@@ -168,14 +175,14 @@ class CommentSerializer(serializers.ModelSerializer):
         return username
 
     def get_avi_pic(self, comment):
-        avi_pic = comment.user.avi_pic.url
+        avi_pic = comment.user.avi_pic
         credentials = service_account.Credentials.from_service_account_file(
-            os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
+            settings.GCS_CREDENTIALS
         )
         # Get the image URL from Google Cloud Storage
         client = storage.Client(credentials=credentials)
-        bucket = client.bucket('your-bucket-name')
-        blob = bucket.blob(avi_pic.image.name)
+        bucket = client.bucket(os.environ.get('GS_BUCKET_NAME'))
+        blob = bucket.blob(f"media/avi_images/{avi_pic}")
         url = blob.public_url
 
         return url
@@ -200,14 +207,14 @@ class LikesSerializer(serializers.ModelSerializer):
         return username
 
     def get_avi_pic(self, like):
-        avi_pic = like.user.avi_pic.url
+        avi_pic = like.user.avi_pic
         credentials = service_account.Credentials.from_service_account_file(
-            os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
+            settings.GCS_CREDENTIALS
         )
         # Get the image URL from Google Cloud Storage
         client = storage.Client(credentials=credentials)
-        bucket = client.bucket('your-bucket-name')
-        blob = bucket.blob(avi_pic.image.name)
+        bucket = client.bucket(os.environ.get('GS_BUCKET_NAME'))
+        blob = bucket.blob(f"media/avi_images/{avi_pic}")
         url = blob.public_url
 
         return url

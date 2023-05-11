@@ -14,4 +14,12 @@ const prodEnvVars = {
   IOS_CLIENT_ID,
 };
 
-export default __DEV__ ? devEnvVars : prodEnvVars;
+const envVars = {
+  DEV_URL,
+  PROD_URL,
+  WS_URL,
+  WEB_CLIENT_ID,
+  IOS_CLIENT_ID,
+};
+
+export default envVars;

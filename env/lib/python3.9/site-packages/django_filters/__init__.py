@@ -10,7 +10,7 @@ if pkgutil.find_loader("rest_framework") is not None:
     from . import rest_framework
 del pkgutil
 
-__version__ = "22.1"
+__version__ = "23.2"
 
 
 def parse_version(version):
@@ -29,3 +29,11 @@ def parse_version(version):
 
 
 VERSION = parse_version(__version__)
+
+
+
+assert VERSION < (25,0), "Remove deprecated code"
+
+
+class RemovedInDjangoFilter25Warning(DeprecationWarning):
+    pass

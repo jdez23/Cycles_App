@@ -29,6 +29,7 @@ const PlaylistScreen = route => {
   const navigation = useNavigation();
   const data = route.route;
   const [isLoading, setLoading] = useState(false);
+  const [loading, set_Loading] = useState(false);
   const [isSetLoading, setIsLoading] = useState(true);
   const [isRefreshing, setRefreshing] = useState(false);
   const [toast, setToast] = useState(null);
@@ -83,6 +84,7 @@ const PlaylistScreen = route => {
   };
 
   const onDeletePlaylist = async userID => {
+    set_Loading(true);
     try {
       const res = await playlistContext?.deletePlaylist(playlist?.id);
       if (res === 200) {
@@ -91,6 +93,7 @@ const PlaylistScreen = route => {
         if (userID) {
           playlistContext.getPlaylistData();
         }
+        set_Loading(false);
         navigation.goBack();
       } else {
         null;
@@ -101,6 +104,7 @@ const PlaylistScreen = route => {
         payload: 'Something went wrong. Please try again.',
       });
     }
+    set_Loading(false);
   };
 
   //Show action sheet
@@ -157,7 +161,7 @@ const PlaylistScreen = route => {
   useEffect(() => {
     setTimeout(() => {
       setIsLoading(false);
-    }, 1000);
+    }, 1300);
     authContext?.getCurrentUser();
   }, []);
 
@@ -217,6 +221,22 @@ const PlaylistScreen = route => {
             onRefresh={onRefresh}></FlatList>
         ) : null}
       </View>
+      {loading == true ? (
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            backgroundColor: 'rgba(12, 12, 12, 0.5)',
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            alignItems: 'center',
+          }}>
+          <ActivityIndicator size="small" />
+        </View>
+      ) : null}
     </SafeAreaView>
   ) : (
     <View

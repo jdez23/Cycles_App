@@ -24,18 +24,18 @@ class User(AbstractUser):
     is_active = models.BooleanField(default=True)
     firebase_id = models.CharField(
         max_length=400, null=True, blank=True)
-    header_pic = models.ImageField(
-        max_length=4000, null=True, blank=True, upload_to='media/header_images', default='media/avi_images/defualt_image.png')
-    avi_pic = models.ImageField(
-        max_length=4000, null=True, blank=True, upload_to='media/avi_images', default='media/avi_images/defualt_image.png')
+    header_pic = models.CharField(
+        default='', null=True, blank=True, max_length=3000)
+    avi_pic = models.CharField(
+        default='', null=True, blank=True, max_length=3000)
     # email = models.EmailField(max_length=250, unique=True)
-    name = models.CharField(max_length=50, blank=True, null=True)
+    name = models.CharField(max_length=50, blank=True, null=True, default="")
     username = models.CharField(max_length=30, unique=True)
     location = models.CharField(
         max_length=80, null=True, blank=True, default='')
     bio = models.CharField(max_length=150, null=True, blank=True, default='')
     spotify_url = models.CharField(
-        max_length=300, null=True, blank=True, default='')
+        max_length=3000, null=True, blank=True, default='')
 
     # USERNAME_FIELD = 'username'
 

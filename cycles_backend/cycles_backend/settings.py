@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 import django_heroku
 import dj_database_url
+# from .utils import get_secret
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -24,14 +25,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY')
+SECRET_KEY = os.environ['SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.ngrok.io']
+ALLOWED_HOSTS = ['cycles.herokuapp.com']
 
-CSRF_TRUSTED_ORIGINS = ['https://*.ngrok.io', 'https://*.127.0.0.1']
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.cycles.herokuapp.com']
 
 
 # Application definition
@@ -74,9 +76,7 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
-    ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 20
+    ]
 }
 
 MIDDLEWARE = [
@@ -93,7 +93,8 @@ MIDDLEWARE = [
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8081",
-    "http://localhost:8082"
+    "http://localhost:8082",
+    "https://cycles.herokuapp.com",
 ]
 
 ROOT_URLCONF = 'cycles_backend.urls'
@@ -126,23 +127,8 @@ ASGI_APPLICATION = 'cycles_backend.asgi.application'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
 DATABASES = {
-    'default': dj_database_url.parse(os.environ.get('DATABASE_URL')),
+    'default': dj_database_url.parse(os.environ['DATABASE_URL']),
 }
-
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-#         'NAME': env('DATABASE_NAME'),
-#         'HOST': env('DATABASE_HOST'),
-#         'PORT': env('DATABASE_PORT'),
-#         'USER': env('DATABASE_USER'),
-#         'PASSWORD': get_secret('db_pass'),
-#         'OPTIONS': {
-#             'isolation_level': 'repeatable read',
-#         }
-#     }
-# }
 
 
 # Password validation
@@ -170,19 +156,13 @@ AUTHENTICATION_BACKENDS = [
 
 ACCOUNT_EMAIL_REQUIRED = True
 
-EMAIL_HOST = os.environ.get('EMAIL_HOST')
+EMAIL_HOST = os.environ['EMAIL_HOST']
 EMAIL_USE_TLS = True
-EMAIL_PORT = os.environ.get('EMAIL_PORT')
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+EMAIL_PORT = os.environ['EMAIL_PORT']
+EMAIL_HOST_USER = os.environ['EMAIL_HOST_USER']
+EMAIL_HOST_PASSWORD = os.environ['EMAIL_HOST_PASSWORD']
 
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
-
-# REST_AUTH_SERIALIZERS = {
-#     'TOKEN_SERIALIZER': 'users.serializers.TokenSerializer'
-# }
-
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
@@ -210,19 +190,21 @@ STATIC_URL = '/static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-MEDIA_URL = os.environ.get('MEDIA_URL')
+DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
 
-DEFAULT_FILE_STORAGE = 'storages.backend.gcloud.GoogleCloudStorage'
-GS_BUCKET_NAME = os.environ.get('GS_BUCKET_NAME')
-GS_PROJECT_ID = os.environ.get('GS_PROJECT_ID')
-GS_LOCATION = os.environ.get('GS_LOCATION')
+GS_BUCKET_NAME = os.environ['GS_BUCKET_NAME']
+GS_PROJECT_ID = os.environ['GS_PROJECT_ID']
+GS_LOCATION = os.environ['GS_LOCATION']
+
+MEDIA_URL = os.environ['MEDIA_URL']
+MEDIA_ROOT = 'https://storage.googleapis.com/{}/'.format(GS_BUCKET_NAME)
+
 
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("127.0.0.1", 6379)],
+            "hosts": [('cycles.herokuapp.com', 6379)],
         },
     },
 }
@@ -231,3 +213,4 @@ django_heroku.settings(locals())
 
 FIREBASE_CONFIG = os.path.join(BASE_DIR, 'firebase-config.json')
 GOOGLE_APPLICATION_CREDENTIALS = os.environ["GOOGLE_APPLICATION_CREDENTIALS"]
+GCS_CREDENTIALS = os.path.join(BASE_DIR, 'gcs-config.json')

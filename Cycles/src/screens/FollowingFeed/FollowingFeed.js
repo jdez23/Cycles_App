@@ -14,6 +14,7 @@ import {
   ActivityIndicator,
   Linking,
   Dimensions,
+  TouchableOpacity,
 } from 'react-native';
 import envs from '../../../Config/env';
 import Header from '../../components/Header/Header';
@@ -22,8 +23,8 @@ import RNSInfo from 'react-native-sensitive-info';
 import Spotify_Icon_RGB_Green from '../../../assets/logos/Spotify_Icon_RGB_Green.png';
 import Toast from 'react-native-root-toast';
 import moment from 'moment';
-import {Context as AuthContext} from '../../context/AuthContext';
 import {Context as PlaylistContext} from '../../context/PlaylistContext';
+import {requestUserPermission} from '../../firebaseMessaging/notificationHelper';
 
 const window = Dimensions.get('window').width;
 
@@ -32,15 +33,18 @@ const FollowingFeed = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
   const [toast, setToast] = useState(null);
-  const authContext = useContext(AuthContext);
   const playlistContext = useContext(PlaylistContext);
   const getUserID = async () => await RNSInfo.getItem('user_id', {});
   const BACKEND_URL = envs.DEV_URL;
 
   useEffect(() => {
+    requestUserPermission();
+  }, []);
+
+  useEffect(() => {
     if (playlistContext?.state?.errorMessage) {
       setToast(
-        Toast.show(authContext?.state?.errorMessage, {
+        Toast.show(playlistContext?.state?.errorMessage, {
           duration: Toast.durations.SHORT,
           position: Toast.positions.CENTER,
           onHidden: () =>
@@ -50,9 +54,9 @@ const FollowingFeed = () => {
     } else if (toast) {
       Toast.hide(toast);
     }
-  }, [authContext?.state?.errorMessage]);
+  }, [playlistContext?.state?.errorMessage]);
 
-  //Call API function to fetch following playlists && Ask for notif permission
+  // Call API function to fetch following playlists
   useEffect(() => {
     playlistContext?.getFollowersPlaylists();
   }, []);
@@ -92,27 +96,6 @@ const FollowingFeed = () => {
     });
   };
 
-  // //Fetch followers playlists
-  // const getFollowersPlaylists = async () => {
-  //   const token = await RNSInfo.getItem('token', {});
-  //   try {
-  //     await axios
-  //       .get(`${BACKEND_URL}/feed/following-playlists/`, {
-  //         headers: {
-  //           'Content-Type': 'application/json',
-  //           Authorization: token,
-  //         },
-  //       })
-  //       .then(res => {
-  //         const Following_PLaylist = res.data;
-  //         // console.log(Following_PLaylist);
-  //         setFollwingPlaylist(Following_PLaylist);
-  //       });
-  //   } catch (error) {
-  //     null;
-  //   }
-  // };
-
   const _renderItem = ({item}) => (
     <View
       style={{
@@ -123,11 +106,9 @@ const FollowingFeed = () => {
       <View
         style={{
           flexDirection: 'row',
-          // justifyContent: 'space-between',
           alignItems: 'center',
-          // backgroundColor: 'lightblue',
         }}>
-        <Pressable
+        <TouchableOpacity
           onPress={() => onUserPic(item)}
           style={{
             height: 35,
@@ -137,10 +118,13 @@ const FollowingFeed = () => {
           }}>
           {item.avi_pic ? (
             <Image
-              style={{height: 35, width: 35, borderRadius: 30}}
-              source={{
-                uri: `${BACKEND_URL}${item.avi_pic}`,
+              style={{
+                height: 35,
+                width: 35,
+                borderRadius: 30,
+                backgroundColor: '#1f1f1f',
               }}
+              source={{uri: item.avi_pic}}
             />
           ) : (
             <View
@@ -152,14 +136,14 @@ const FollowingFeed = () => {
               }}
             />
           )}
-        </Pressable>
+        </TouchableOpacity>
         <View
           style={{
             flexDirection: 'column',
             marginLeft: 10,
             alignContent: 'center',
           }}>
-          <Pressable onPress={() => onUserPic(item)}>
+          <TouchableOpacity onPress={() => onUserPic(item)}>
             <Text
               style={{
                 textAlign: 'left',
@@ -169,8 +153,8 @@ const FollowingFeed = () => {
               }}>
               {item.username}
             </Text>
-          </Pressable>
-          {item.location == null ? null : (
+          </TouchableOpacity>
+          {!item.location ? null : (
             <Text
               style={{
                 textAlign: 'left',
@@ -184,7 +168,7 @@ const FollowingFeed = () => {
         </View>
       </View>
       <View style={{marginTop: 8}}>
-        {item.first_image.image ? (
+        {item.first_image.images ? (
           <ImageBackground
             style={{
               height: 260,
@@ -195,14 +179,13 @@ const FollowingFeed = () => {
               backgroundColor: '#121212',
             }}
             source={{
-              uri: `https://c287-68-91-157-115.ngrok.io${item.first_image.image}`,
+              uri: item.first_image.images,
             }}>
             <Pressable
               onPress={() => onPlaylistDetail(item)}
               style={{width: window - 36}}>
               <View
                 style={{
-                  // width: 360,
                   height: 85,
                   backgroundColor: 'rgba(60, 60, 60, 0.7)',
                   borderRadius: 3,
@@ -222,6 +205,7 @@ const FollowingFeed = () => {
                         height: 70,
                         resizeMode: 'cover',
                         borderRadius: 2,
+                        backgroundColor: '#1f1f1f',
                       }}
                       source={{uri: item.playlist_cover}}
                     />
@@ -282,8 +266,6 @@ const FollowingFeed = () => {
           alignItems: 'center',
           marginTop: 5,
           justifyContent: 'space-between',
-          paddingHorizontal: 12,
-          // backgroundColor: 'purple',
         }}>
         <View
           style={{
@@ -294,7 +276,7 @@ const FollowingFeed = () => {
             <Text
               style={{
                 textAlign: 'left',
-                marginTop: 1,
+                marginTop: 2,
                 color: 'lightgrey',
                 fontSize: 13,
               }}>
@@ -314,8 +296,6 @@ const FollowingFeed = () => {
       </View>
     </View>
   );
-
-  // console.log('--', playlistContext?.state);
 
   return playlistContext?.state?.followingPlaylists ? (
     <SafeAreaView style={styles.screen}>

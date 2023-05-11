@@ -1,4 +1,4 @@
-import React, {useContext, useEffect} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   Pressable,
   SafeAreaView,
   Alert,
+  TouchableOpacity,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -17,6 +18,7 @@ const ProfileSettings = route => {
   const {user_id} = route.route.params;
   const navigation = useNavigation();
   const [toast, setToast] = React.useState(null);
+  const [loading, setLoading] = useState(false);
   const onBack = () => {
     navigation.goBack();
   };
@@ -35,6 +37,38 @@ const ProfileSettings = route => {
     }
   }, [authContext?.state?.errorMessage]);
 
+  const onSignOut = () => {
+    setLoading(true);
+    try {
+      const res = authContext.signout();
+      if (res === 200) {
+        setLoading(false);
+      }
+    } catch (e) {
+      authContext?.dispatch({
+        type: 'error_1',
+        payload: 'Something went wrong. Please try again.',
+      });
+    }
+    setLoading(false);
+  };
+
+  const onDelete = () => {
+    setLoading(true);
+    try {
+      const res = authContext.deleteAccount(user_id);
+      if (res === 200) {
+        setLoading(false);
+      }
+    } catch (e) {
+      authContext?.dispatch({
+        type: 'error_1',
+        payload: 'Something went wrong. Please try again.',
+      });
+    }
+    setLoading(false);
+  };
+
   const deleteProfileAlert = () =>
     Alert.alert(
       'Are you sure you want to delete your account?',
@@ -42,7 +76,7 @@ const ProfileSettings = route => {
       [
         {
           text: 'Yes',
-          onPress: () => authContext?.deleteAccount(user_id),
+          onPress: () => onDelete(),
         },
         {
           text: 'Cancel',
@@ -59,7 +93,7 @@ const ProfileSettings = route => {
     <SafeAreaView
       style={StyleSheet.create({backgroundColor: '#0C0C0C', flex: 1})}>
       <View style={styles.container}>
-        <Pressable onPress={onBack}>
+        <TouchableOpacity onPress={onBack}>
           <View
             style={{
               height: 50,
@@ -69,12 +103,12 @@ const ProfileSettings = route => {
             }}>
             <Ionicons name="chevron-back" size={25} color={'white'} />
           </View>
-        </Pressable>
+        </TouchableOpacity>
         <Text style={styles.textUser}>Settings</Text>
         <View style={{height: 50, width: 50}} />
       </View>
       <View style={{paddingHorizontal: 12}}>
-        <Pressable
+        <TouchableOpacity
           onPress={() => navigation.navigate('ServicesScreen')}
           style={{paddingTop: 12}}>
           <View
@@ -91,10 +125,8 @@ const ProfileSettings = route => {
               style={{color: 'white', fontSize: 20}}
             />
           </View>
-        </Pressable>
-        <Pressable
-          onPress={() => authContext?.signout()}
-          style={{paddingTop: 12}}>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => onSignOut()} style={{paddingTop: 12}}>
           <View
             style={{
               justifyContent: 'space-between',
@@ -109,8 +141,8 @@ const ProfileSettings = route => {
               style={{color: 'white', fontSize: 20}}
             />
           </View>
-        </Pressable>
-        <Pressable onPress={deleteProfileAlert} style={{paddingTop: 12}}>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={deleteProfileAlert} style={{paddingTop: 12}}>
           <View
             style={{
               justifyContent: 'space-between',
@@ -125,18 +157,24 @@ const ProfileSettings = route => {
               style={{color: 'white', fontSize: 20}}
             />
           </View>
-        </Pressable>
-        {/* <Pressable style={{ alignItems: 'center', top: 560 }} onPress={signout} >
-            <View style={{ height: 30, width: 85, backgroundColor: '#1f1f1f', alignItems: 'center', justifyContent: 'center', borderRadius: 30 }}>
-              <Text style={{ fontSize: 12, color: 'white', fontWeight: '600' }}>Log Out</Text>
-            </View>
-        </Pressable>
-        <Pressable style={{ top: 570 }} >
-            <View style={{ height: 30, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ fontSize:13, fontWeight: '600', color: 'white' }}>Delete Account</Text>
-            </View>
-        </Pressable> */}
+        </TouchableOpacity>
       </View>
+      {loading == true ? (
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            backgroundColor: 'rgba(12, 12, 12, 0.5)',
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            alignItems: 'center',
+          }}>
+          <ActivityIndicator size="small" />
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 };

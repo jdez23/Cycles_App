@@ -1,12 +1,9 @@
-import React, {useEffect, useContext, useState} from 'react';
 import context from './context';
-import {BASEURL} from '../utils/api/url';
 import RNSInfo from 'react-native-sensitive-info';
-import {ngrokURL} from './AuthContext';
 import axios from 'axios';
 import envs from '../../Config/env';
 
-const BACKEND_URL = envs.DEV_URL;
+const BACKEND_URL = envs.PROD_URL;
 
 const defaultValue = {
   // avi_pic: null,
@@ -83,7 +80,7 @@ const playlistReducer = (state, action) => {
         ...state,
         myPlaylistData: action.myPlaylistData,
       };
-    case 'getAllPLaylists':
+    case 'allPlaylists':
       return {
         ...state,
         allPlaylists: action.allPlaylists,
@@ -375,23 +372,17 @@ const deletePlaylist = dispatch => async id => {
 };
 
 // Get all comments for playlist
-const getComments = dispatch => async props => {
-  playlist_id = props;
-  // console.log('---', props);
+const getComments = dispatch => async playlist_id => {
   const token = await RNSInfo.getItem('token', {});
   try {
     axios
-      .get(`${BACKEND_URL}/feed/comments-playlist/`, {
+      .get(`${BACKEND_URL}/feed/comments-playlist/?id=${playlist_id}`, {
         headers: {
           'Content-Type': 'application/json',
           Authorization: token,
         },
-        params: {
-          id: playlist_id,
-        },
       })
       .then(res => {
-        // console.log('====', res.data);
         const comments = res.data;
         dispatch({
           type: 'comments',
@@ -408,9 +399,7 @@ const getComments = dispatch => async props => {
 
 // Comment on playlist
 const comment = dispatch => async props => {
-  // console.log('imgs:', props.images);
   const token = await RNSInfo.getItem('token', {});
-  // const ws = new WebSocket(`${BACKEND_URL}/ws/notif-socket/?token=${token}`);
   const data = {
     to_user: props.to_user.toString(),
     title: 'Cycles',
@@ -418,7 +407,7 @@ const comment = dispatch => async props => {
   };
   try {
     const response = await axios.post(
-      `${ngrokURL}/feed/comments-playlist/`,
+      `${BACKEND_URL}/feed/comments-playlist/`,
       {
         id: props.playlist_id,
         title: props.title,
@@ -430,7 +419,7 @@ const comment = dispatch => async props => {
         },
       },
     );
-    data['body'] = `${response.data.username} commented: ${props.title}`;
+    data['body'] = `commented: ${props.title}`;
     data['playlist_id'] = props.playlist_id;
     data['type'] = 'comment';
     data['comment'] = response.data.id;
@@ -438,11 +427,8 @@ const comment = dispatch => async props => {
     data['like'] = null;
     if (response.status === 201) {
       dispatch({type: 'POST_COMMENT', payload: response.data});
-      // ws.onopen = () => {
-      //   ws.send(JSON.stringify(data));
-      // };
       try {
-        axios.post(`${ngrokURL}/notifications/message/`, data, {
+        axios.post(`${BACKEND_URL}/notifications/message/`, data, {
           headers: {
             'Content-Type': 'application/json',
             Authorization: token,
@@ -488,7 +474,6 @@ const checkIfLiked = dispatch => async id => {
         Authorization: token,
       },
     });
-    // console.log('-=-=', isLiked);
     return isLiked;
   } catch (err) {
     null;
@@ -501,7 +486,6 @@ const likePlaylist = dispatch => async route => {
   const token = await RNSInfo.getItem('token', {});
   const to_user = route.to_user;
   const playlist_cover = route.images;
-  // const ws = new WebSocket(`${BACKEND_URL}/ws/notif-socket/?token=${token}`);
   const data = {
     to_user: to_user.toString(),
     title: 'Cycles',
@@ -509,7 +493,7 @@ const likePlaylist = dispatch => async route => {
   };
   try {
     const response = await axios.post(
-      `${ngrokURL}/feed/like-playlist/`,
+      `${BACKEND_URL}/feed/like-playlist/`,
       {
         id: playlist_id,
         like: 'True',
@@ -523,15 +507,12 @@ const likePlaylist = dispatch => async route => {
     );
     const isLiked = response.data.like;
     data['like'] = response.data.id;
-    data['body'] = `${response.data.username} liked your playlist.`;
+    data['body'] = `liked your playlist.`;
     data['playlist_id'] = playlist_id;
     data['type'] = 'like';
     data['follow'] = null;
     data['comment'] = null;
     if (response.status === 201) {
-      // ws.onopen = () => {
-      //   ws.send(JSON.stringify(data));
-      // };
       try {
         axios.post(`${BACKEND_URL}/notifications/message/`, data, {
           headers: {
@@ -565,9 +546,7 @@ const unlikePlaylist = dispatch => async id => {
       })
       .then(res => {
         value = res.data;
-        // console.log('unlike:', value);
         return value;
-        // dispatch({type: 'isLiked', isLiked: value});
       });
   } catch (err) {
     return false;
@@ -577,7 +556,6 @@ const unlikePlaylist = dispatch => async id => {
 // Follow user
 const followUser = dispatch => async props => {
   const token = await RNSInfo.getItem('token', {});
-  // const ws = new WebSocket(`${BACKEND_URL}/ws/notif-socket/?token=${token}`);
   const data = {
     to_user: props.to_user,
     title: 'Cycles',
@@ -595,14 +573,11 @@ const followUser = dispatch => async props => {
       },
     );
     data['follow'] = response.data.id;
-    data['body'] = `${response.data.username} started following you.`;
+    data['body'] = `started following you.`;
     data['type'] = 'follow';
     data['like'] = null;
     data['comment'] = null;
     if (response.status === 201) {
-      // ws.onopen = () => {
-      //   ws.send(JSON.stringify(data));
-      // };
       axios.post(`${BACKEND_URL}/notifications/message/`, data, {
         headers: {
           'Content-Type': 'application/json',
@@ -617,7 +592,6 @@ const followUser = dispatch => async props => {
 
 // Unfollow user
 const unfollowUser = dispatch => async props => {
-  // console.log(props);
   const userToken = await RNSInfo.getItem('token', {});
   try {
     await axios.delete(`${BACKEND_URL}/users/following/`, {

@@ -5,7 +5,8 @@ import envs from '../../Config/env';
 import {useNavigation} from '@react-navigation/native';
 
 const getToken = async () => await RNSInfo.getItem('token', {});
-const BACKEND_URL = envs.DEV_URL;
+
+const BACKEND_URL = envs.PROD_URL;
 
 export async function requestUserPermission() {
   try {

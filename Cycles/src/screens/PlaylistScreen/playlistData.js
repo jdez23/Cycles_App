@@ -9,6 +9,7 @@ import {
   Linking,
   FlatList,
   Dimensions,
+  TouchableOpacity,
 } from 'react-native';
 import {Context as PlaylistContext} from '../../context/PlaylistContext';
 import {Context as AuthContext} from '../../context/AuthContext';
@@ -100,7 +101,7 @@ export default PlaylistDetails = item => {
                   <Image
                     style={{height: window, width: window}}
                     source={{
-                      uri: item?.item?.image,
+                      uri: item?.item?.images,
                     }}
                   />
                 </View>
@@ -125,13 +126,13 @@ export default PlaylistDetails = item => {
                 justifyContent: 'center',
               }}>
               {isLiked == true ? (
-                <Pressable onPress={() => onUnlike(item.item)}>
+                <TouchableOpacity onPress={() => onUnlike(item.item)}>
                   <FontAwesome name="heart" size={24} color={'red'} />
-                </Pressable>
+                </TouchableOpacity>
               ) : (
-                <Pressable onPress={() => onLike(props)}>
+                <TouchableOpacity onPress={() => onLike(props)}>
                   <Feather name="heart" size={24} color={'white'} />
-                </Pressable>
+                </TouchableOpacity>
               )}
             </View>
             <View
@@ -142,9 +143,9 @@ export default PlaylistDetails = item => {
                 alignItems: 'center',
                 justifyContent: 'center',
               }}>
-              <Pressable onPress={() => onComments(item?.playlist_id)}>
+              <TouchableOpacity onPress={() => onComments(item?.playlist_id)}>
                 <Feather name="message-circle" size={25} color={'white'} />
-              </Pressable>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -159,7 +160,7 @@ export default PlaylistDetails = item => {
             {playlist?.description}
           </Text>
         )}
-        <Pressable onPress={() => onComments(playlist?.playlist_id)}>
+        <TouchableOpacity onPress={() => onComments(playlist?.playlist_id)}>
           <Text
             style={{
               color: 'lightgrey',
@@ -169,7 +170,7 @@ export default PlaylistDetails = item => {
             }}>
             See all comments
           </Text>
-        </Pressable>
+        </TouchableOpacity>
         <View
           style={{
             flexDirection: 'row',
@@ -189,6 +190,7 @@ export default PlaylistDetails = item => {
                   height: 70,
                   resizeMode: 'cover',
                   borderRadius: 2,
+                  backgroundColor: '#1f1f1f',
                 }}
                 source={{uri: playlist?.playlist_cover}}
               />
@@ -241,7 +243,7 @@ export default PlaylistDetails = item => {
             style={{
               flexDirection: 'row',
               justifyContent: 'space-between',
-              paddingTop: 4,
+              paddingVertical: 4,
               paddingHorizontal: 12,
               alignItems: 'center',
             }}>
@@ -271,7 +273,7 @@ export default PlaylistDetails = item => {
                   style={{
                     color: 'white',
                     fontSize: 13,
-                    fontWeight: '600',
+                    fontWeight: '500',
                     width: 250,
                   }}>
                   {item?.name}
@@ -281,7 +283,6 @@ export default PlaylistDetails = item => {
                     marginTop: 2,
                     color: 'lightgrey',
                     fontSize: 13,
-                    fontWeight: '500',
                   }}>
                   {item?.artist}
                 </Text>
@@ -296,7 +297,7 @@ export default PlaylistDetails = item => {
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
-              onPress={() => Linking.openURL(item?.external_urls.spotify)}>
+              onPress={() => Linking.openURL(item?.track_id)}>
               <Image
                 style={{width: 15, height: 15}}
                 source={Spotify_Icon_RGB_Green}

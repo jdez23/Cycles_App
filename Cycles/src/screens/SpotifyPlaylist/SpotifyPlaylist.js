@@ -44,8 +44,6 @@ const SpotifyPlaylist = () => {
     }
   }, [playlistContext?.state?.errorMessage]);
 
-  // console.log(spotifyPlaylists);
-
   //Call fetch Spotify playlists function
   useEffect(() => {
     setTimeout(() => {
@@ -132,8 +130,6 @@ const SpotifyPlaylist = () => {
     </Pressable>
   );
 
-  // console.log(spotifyPlaylists);
-
   if (isLoading) {
     return (
       <View
@@ -177,7 +173,6 @@ const SpotifyPlaylist = () => {
           style={{
             alignItems: 'center',
             flex: 1,
-            // backgroundColor: 'brown',
           }}>
           <FlatList
             data={spotifyPlaylists}

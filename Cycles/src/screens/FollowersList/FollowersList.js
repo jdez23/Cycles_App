@@ -18,7 +18,7 @@ import RNSInfo from 'react-native-sensitive-info';
 import Toast from 'react-native-root-toast';
 import envs from '../../../Config/env';
 
-const BACKEND_URL = envs.DEV_URL;
+const BACKEND_URL = envs.PROD_URL;
 
 const window = Dimensions.get('window').width;
 
@@ -95,7 +95,6 @@ const FollowersList = route => {
         })
         .then(res => {
           const followersData = res.data;
-          // console.log(followersData);
           setFollowers(followersData);
         });
     } catch (error) {

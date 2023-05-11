@@ -24,12 +24,11 @@ import {Context as AuthContext} from '../../context/AuthContext';
 import {Context as PlaylistContext} from '../../context/PlaylistContext';
 import envs from '../../../Config/env';
 
-const BACKEND_URL = envs.DEV_URL;
+const BACKEND_URL = envs.PROD_URL;
 
 const window = Dimensions.get('window').width;
 
 const DiscoverFeed = () => {
-  const [playlistData, setPlaylistData] = useState([]);
   const [recentSearch, setRecentSearched] = useState([]);
   const [searchUsers, setSearchUsers] = useState([]);
   const [searchPlaylists, setSearchPlaylists] = useState([]);
@@ -113,22 +112,6 @@ const DiscoverFeed = () => {
     });
   };
 
-  // Search playlists
-  // const searchFilter = text => {
-  //   if (text) {
-  //     const newData = playlistData.filter(item => {
-  //       const itemData =
-  //         item.playlist_title || item.username
-  //           ? item.playlist_title.toUpperCase()
-  //           : ''.toUpperCase();
-  //       const textData = text.toUpperCase();
-  //       return itemData.includes(textData);
-  //     });
-  //     setFilterdData(newData);
-  //     setSearch(text);
-  //   }
-  // };
-
   //Render Playlist data
   const renderPlaylists = ({item}) => (
     <View
@@ -188,7 +171,6 @@ const DiscoverFeed = () => {
                   textAlign: 'left',
                   color: 'white',
                   fontSize: 13,
-                  fontWeight: '500',
                 }}
                 numberOfLines={1}>
                 {item.username}
@@ -224,7 +206,12 @@ const DiscoverFeed = () => {
       onPress={() => onPlaylistDetail(item)}>
       <View style={{flexDirection: 'row'}}>
         <Image
-          style={{width: 50, height: 50, borderRadius: 2}}
+          style={{
+            width: 50,
+            height: 50,
+            borderRadius: 2,
+            backgroundColor: '#1f1f1f',
+          }}
           source={{uri: item.playlist_cover}}
         />
         <View
@@ -276,7 +263,12 @@ const DiscoverFeed = () => {
         <View style={{flexDirection: 'row'}}>
           {item.playlist_cover ? (
             <Image
-              style={{width: 50, height: 50, borderRadius: 2}}
+              style={{
+                width: 50,
+                height: 50,
+                borderRadius: 2,
+                backgroundColor: '#1f1f1f',
+              }}
               source={{
                 uri: item.playlist_cover,
               }}
@@ -310,43 +302,26 @@ const DiscoverFeed = () => {
               numberOfLines={1}>
               {item.username}
             </Text>
-            <Text
-              style={{
-                textAlign: 'left',
-                color: 'lightgrey',
-                fontSize: 13,
-                marginTop: 2,
-              }}
-              numberOfLines={1}>
-              {item.playlist_title
-                ? item.playlist_title
-                : item.name
-                ? item.name
-                : null}
-            </Text>
+            {item.playlist_title ? (
+              <Text
+                style={{
+                  textAlign: 'left',
+                  color: 'lightgrey',
+                  fontSize: 13,
+                  marginTop: 2,
+                }}
+                numberOfLines={1}>
+                {item.playlist_title
+                  ? item.playlist_title
+                  : item.name
+                  ? item.name
+                  : null}
+              </Text>
+            ) : null}
           </View>
         </View>
       </TouchableHighlight>
     ) : null;
-
-  // //Fetch all playlists
-  // const getPlaylists = async () => {
-  //   const token = await RNSInfo.getItem('token', {});
-  //   try {
-  //     await axios
-  //       .get(`${BACKEND_URL}/feed/playlist/`, {
-  //         headers: {
-  //           'Content-Type': 'application/json',
-  //           Authorization: token,
-  //         },
-  //       })
-  //       .then(res => {
-  //         setPlaylistData(res.data);
-  //       });
-  //   } catch (error) {
-  //     null;
-  //   }
-  // };
 
   const searchAPI = async text => {
     const token = await RNSInfo.getItem('token', {});
@@ -417,7 +392,6 @@ const DiscoverFeed = () => {
               height: 50,
               justifyContent: 'center',
               alignItems: 'flex-end',
-              // backgroundColor: 'orange',
             }}
             onPress={() => {
               Keyboard.dismiss();
@@ -437,7 +411,8 @@ const DiscoverFeed = () => {
       </View>
       <View
         style={
-          playlistData.length > 1
+          playlistContext.state.allPlaylists &&
+          playlistContext.state.allPlaylists.length > 1
             ? {
                 flex: 1,
                 justifyContent: 'center',
@@ -464,8 +439,8 @@ const DiscoverFeed = () => {
           )
         ) : (
           <FlatList
-            data={playlistData}
-            key={playlistData}
+            data={playlistContext?.state.allPlaylists}
+            key={playlistContext?.state.allPlaylists}
             renderItem={renderPlaylists}
             numColumns={2}
             refreshing={isRefreshing}

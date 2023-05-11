@@ -18,7 +18,6 @@ def get_update_or_create_fcm_token(user, token):
         else:
             fcm_token.token = token
             fcm_token.save(update_fields=['token'])
-            print('else', fcm_token)
             return fcm_token
     else:
         firebase_token = fcmToken(user=user, token=token)

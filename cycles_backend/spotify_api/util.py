@@ -66,8 +66,6 @@ def refresh_spotify_token(user):
         'client_secret': CLIENT_SECRET,
     }).json()
 
-    print('RES==:', response)
-
     access_token = response.get('access_token')
     expires_in = response.get('expires_in')
     token_type = response.get('token_type')

@@ -1,3 +1,4 @@
+import os
 from django.db import models
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
@@ -46,8 +47,8 @@ class PlaylistTracks(models.Model):
 class PlaylistImages(models.Model):
     playlist = models.ForeignKey(
         Playlist, on_delete=models.CASCADE, related_name='playlist_images')
-    image = models.ImageField(default=None, null=True,
-                              blank=True, upload_to='media/playlist_images')
+    image = models.CharField(default='', null=True,
+                             blank=True, max_length=3000)
 
 
 class Like(models.Model):

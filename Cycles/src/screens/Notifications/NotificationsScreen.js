@@ -70,10 +70,15 @@ const NotificationsScreen = () => {
     wait(2000).then(() => setIsRefreshing(false), setLoadingData(false));
   };
 
+  const onDelete = item => {
+    notifContext?.deleteNotification(item.id);
+    notifContext?.getNotifications();
+  };
+
   const rightSwipeActions = item => {
     return (
       <Pressable
-        onPress={() => notifContext?.deleteNotification(item.id)}
+        onPress={() => onDelete(item)}
         style={{
           backgroundColor: 'red',
           justifyContent: 'center',
@@ -103,7 +108,6 @@ const NotificationsScreen = () => {
         params: {item},
       });
     } else if (item.type === 'follow') {
-      console.log(item);
       navigation.navigate({
         name: 'ProfileScreen',
         params: {item},
@@ -112,85 +116,100 @@ const NotificationsScreen = () => {
   };
 
   const _renderItem = ({item}) =>
-    item
-      ? (console.log(item),
-        (
-          <Swipeable
-            containerStyle={{
-              flexDirection: 'row',
+    item ? (
+      <Swipeable
+        containerStyle={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          width: window,
+          paddingVertical: 16,
+          justifyContent: 'space-between',
+        }}
+        renderRightActions={() => rightSwipeActions(item)}>
+        <Pressable
+          onPress={() => onNotif(item)}
+          style={{
+            alignItems: 'center',
+            flexDirection: 'row',
+            width: window,
+            justifyContent: 'space-between',
+            paddingHorizontal: 12,
+          }}>
+          <View
+            style={{
               alignItems: 'center',
-              width: window,
-              paddingVertical: 12,
-              paddingHorizontal: 12,
-              justifyContent: 'space-between',
-            }}
-            renderRightActions={() => rightSwipeActions(item)}>
-            <TouchableOpacity onPress={() => onNotif(item)}>
+              flexDirection: 'row',
+            }}>
+            {item.avi_pic ? (
+              <Pressable
+                onPress={() =>
+                  navigation.navigate({
+                    name: 'ProfileScreen',
+                    params: {item},
+                  })
+                }>
+                <Image
+                  style={{
+                    height: 40,
+                    width: 40,
+                    borderRadius: 30,
+                    backgroundColor: '#1f1f1f',
+                  }}
+                  source={{uri: item.avi_pic}}
+                />
+              </Pressable>
+            ) : null}
+            <View
+              style={{
+                marginLeft: 10,
+                flexDirection: 'column',
+              }}>
               <View
                 style={{
-                  alignItems: 'center',
                   flexDirection: 'row',
-                  width: window,
+                  width: window - 116,
                 }}>
-                {item.avi_pic ? (
-                  <Image
-                    style={{
-                      height: 40,
-                      width: 40,
-                      borderRadius: 30,
-                      backgroundColor: '#1f1f1f',
-                    }}
-                    source={{uri: item.avi_pic}}
-                  />
-                ) : null}
-                <View
+                <Text
                   style={{
-                    marginLeft: 10,
-                    flexDirection: 'column',
+                    textAlign: 'left',
+                    color: 'white',
+                    fontSize: 13,
+                    fontWeight: '600',
                   }}>
-                  <View style={{flexDirection: 'row'}}>
-                    <Text
-                      style={{
-                        textAlign: 'left',
-                        color: 'white',
-                        fontSize: 13,
-                        fontWeight: '500',
-                      }}>
-                      {item.username}
-                    </Text>
-                    <Text
-                      style={{
-                        textAlign: 'left',
-                        marginLeft: 6,
-                        color: 'lightgrey',
-                        fontSize: 13,
-                      }}>
-                      {item.body}
-                    </Text>
-                  </View>
-                  <Text
-                    style={{
-                      color: 'lightgrey',
-                      fontSize: 12,
-                      marginTop: 2,
-                    }}>
-                    {moment(item.date).fromNow()}
-                  </Text>
-                </View>
+                  {item.username}
+                </Text>
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    textAlign: 'left',
+                    marginLeft: 3,
+                    color: 'white',
+                    fontSize: 13,
+                  }}>
+                  {item.body}
+                </Text>
               </View>
-              {item?.image ? (
-                <View
-                  style={{height: 40, width: 40, backgroundColor: '#1f1f1f'}}>
-                  <Image
-                    style={{height: 40, width: 40}}
-                    source={{uri: item.image}}
-                  />
-                </View>
-              ) : null}
-            </TouchableOpacity>
-          </Swipeable>
-        ))
-      : null;
+              <Text
+                style={{
+                  color: 'lightgrey',
+                  fontSize: 12,
+                  marginTop: 2,
+                }}>
+                {moment(item.date).fromNow()}
+              </Text>
+            </View>
+          </View>
+          {item?.image ? (
+            <View style={{height: 40, width: 40, backgroundColor: '#1f1f1f'}}>
+              <Image
+                style={{height: 40, width: 40}}
+                source={{uri: item.image}}
+              />
+            </View>
+          ) : null}
+        </Pressable>
+      </Swipeable>
+    ) : null;
 
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: '#0C0C0C'}}>

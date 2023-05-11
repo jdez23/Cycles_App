@@ -7,15 +7,18 @@ import {
   Pressable,
   TextInput,
   SafeAreaView,
+  TouchableOpacity,
 } from 'react-native';
+import {useNavigation} from '@react-navigation/native';
 import {Context as AuthContext} from '../../context/AuthContext';
 import Toast from 'react-native-root-toast';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import ImagePicker from 'react-native-image-crop-picker';
 
-const OnBoardScreen = params => {
-  const token = params.route.params;
+const OnBoardScreen = () => {
+  const navigation = useNavigation();
   const authContext = useContext(AuthContext);
+  const token = authContext.state.token;
   const [new_avi_pic, setAviPic] = useState('');
   const [user_name, setUsername] = useState('');
   const [toast, setToast] = useState(null);
@@ -54,7 +57,15 @@ const OnBoardScreen = params => {
     usernameInput.current.focus();
   }, []);
 
-  console.log(authContext?.state?.username_error);
+  const completeProfile = () => {
+    authContext?.completeSignUp(data).then(res => {
+      if (res === true) {
+        navigation.navigate({
+          name: 'BottomBar',
+        });
+      }
+    });
+  };
 
   return (
     <SafeAreaView style={styles.root}>
@@ -112,16 +123,16 @@ const OnBoardScreen = params => {
           ) : null}
         </View>
         <View style={{marginTop: 16}}>
-          <Pressable
+          <TouchableOpacity
             disabled={continueDisabled}
-            onPress={() => authContext?.completeSignUp(data)}
+            onPress={() => completeProfile()}
             style={
               continueDisabled
                 ? styles.continue_botton_disabled
                 : styles.button_container
             }>
             <Text style={styles.button_text}>Continue</Text>
-          </Pressable>
+          </TouchableOpacity>
         </View>
       </View>
     </SafeAreaView>
@@ -176,7 +187,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   button_container: {
-    backgroundColor: '#E04326',
+    backgroundColor: '#32D74B',
     width: 350,
     height: 45,
     alignItems: 'center',

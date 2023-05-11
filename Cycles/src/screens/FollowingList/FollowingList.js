@@ -17,7 +17,7 @@ import RNSInfo from 'react-native-sensitive-info';
 import Toast from 'react-native-root-toast';
 import envs from '../../../Config/env';
 
-const BACKEND_URL = envs.DEV_URL;
+const BACKEND_URL = envs.PROD_URL;
 
 const window = Dimensions.get('window').width;
 
@@ -100,7 +100,6 @@ const FollowingList = route => {
   //Navigate to user profile
   const onUser = async item => {
     const currentUser = await RNSInfo.getItem('user_id', {});
-    // console.log(currentUser);
     navigation.push('ProfileScreen', {
       me: currentUser,
       userID: item.following_user,

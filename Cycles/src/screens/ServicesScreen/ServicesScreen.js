@@ -6,13 +6,13 @@ import {
   Pressable,
   SafeAreaView,
   Linking,
+  TouchableOpacity,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Octicons from 'react-native-vector-icons/Octicons';
 import Toast from 'react-native-root-toast';
 import {Context as AuthContext} from '../../context/AuthContext';
-import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const ServicesScreen = () => {
   const authContext = useContext(AuthContext);
@@ -68,7 +68,7 @@ const ServicesScreen = () => {
     <SafeAreaView
       style={StyleSheet.create({backgroundColor: '#0C0C0C', flex: 1})}>
       <View style={styles.container}>
-        <Pressable onPress={onBack}>
+        <TouchableOpacity onPress={onBack}>
           <View
             style={{
               height: 50,
@@ -78,7 +78,7 @@ const ServicesScreen = () => {
             }}>
             <Ionicons name="chevron-back" size={25} color={'white'} />
           </View>
-        </Pressable>
+        </TouchableOpacity>
         <Text style={styles.textUser}>Services</Text>
         <View style={{height: 50, width: 50}} />
       </View>

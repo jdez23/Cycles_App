@@ -20,8 +20,8 @@ class Notification(models.Model):
     from_user = models.ForeignKey(
         User, on_delete=models.CASCADE, blank=True, null=True, related_name='from_user')
     title = models.CharField(max_length=100, default=None, blank=True)
-    image = models.ImageField(default=None, null=True,
-                              blank=True, upload_to='media/notif_images')
+    image = models.CharField(default='', null=True,
+                             blank=True, max_length=3000)
     body = models.TextField(default=None, blank=True)
     playlist_id = models.TextField(default='', null=True, blank=True)
     follow = models.ForeignKey(

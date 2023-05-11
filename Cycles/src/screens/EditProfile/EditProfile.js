@@ -9,6 +9,7 @@ import {
   TextInput,
   Dimensions,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import ImagePicker from 'react-native-image-crop-picker';
@@ -20,16 +21,16 @@ import {Context as AuthContext} from '../../context/AuthContext';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import envs from '../../../Config/env';
 
-const BACKEND_URL = envs.DEV_URL;
+const BACKEND_URL = envs.PROD_URL;
 
 const window = Dimensions.get('window').width;
 
 const EditProfile = ({route}) => {
   const data = route.params?.profile_data;
   const authContext = useContext(AuthContext);
+  const [loading, setLoading] = useState(false);
   const [new_header_pic, setHeaderPic] = useState(data?.header_pic);
   const [new_avi_pic, setAviPic] = useState(data?.avi_pic);
-  const [new_email, setEmail] = useState(data?.email);
   const [new_name, setName] = useState(data?.name);
   const [new_username, setUsername] = useState(data?.username);
   const [new_location, setLocation] = useState(data?.location);
@@ -39,9 +40,6 @@ const EditProfile = ({route}) => {
   const navigation = useNavigation();
   const getToken = async () => await RNSInfo.getItem('token', {});
   const getCurrentUser = async () => await RNSInfo.getItem('user_id', {});
-
-  // console.log(new_header_pic);
-  // console.log('---', new_avi_pic);
 
   const onBack = () => {
     navigation.goBack();
@@ -101,7 +99,7 @@ const EditProfile = ({route}) => {
 
   //Update Profile to API
   const updateProfile = async () => {
-    // console.log('log:', new_avi_pic);
+    setLoading(true);
     const currentUser = await getCurrentUser();
     const token = await getToken();
     const formData = new FormData();
@@ -115,35 +113,33 @@ const EditProfile = ({route}) => {
       type: 'image/jpeg',
       name: new_avi_pic,
     });
-    formData.append('email', new_email);
     formData.append('name', new_name);
     formData.append('username', new_username);
     formData.append('location', new_location);
     formData.append('bio', new_bio);
     formData.append('spotify_url', new_spotify_url);
-    // console.log('log:', formData._parts[0]);
     try {
-      await axios
-        .put(`${BACKEND_URL}/users/user/${currentUser}/`, formData, {
+      const res = await axios.put(
+        `${BACKEND_URL}/users/user/${currentUser}/`,
+        formData,
+        {
           headers: {
             'Content-Type': 'multipart/form-data',
             Authorization: token,
           },
-        })
-        .then(res => {
-          {
-            res.data === 200;
-          }
-          {
-            navigation.navigate('MyProfile');
-          }
-        });
+        },
+      );
+      if (res.status === 200) {
+        setLoading(false);
+        navigation.navigate('MyProfile');
+      }
     } catch (e) {
       authContext?.dispatch({
         type: 'error_1',
         payload: 'Something went wrong. Please try again.',
       });
     }
+    setLoading(false);
   };
 
   return (
@@ -319,35 +315,6 @@ const EditProfile = ({route}) => {
               alignItems: 'center',
             }}>
             <Text
-              numberOfLines={1}
-              style={{
-                color: 'white',
-                fontWeight: '500',
-                fontSize: 14,
-                width: 80,
-                marginRight: 50,
-              }}>
-              Email:
-            </Text>
-            <TextInput
-              style={{color: 'white', fontSize: 14}}
-              clearTextOnFocus={true}
-              numberOfLines={1}
-              value={new_email === 'null' ? null : new_email}
-              onChangeText={setEmail}
-              placeholder={'Email'}
-              placeholderTextColor={'grey'}></TextInput>
-          </View>
-          <View
-            style={{
-              borderBottomWidth: 0.3,
-              borderBottomColor: '#262626',
-              height: 60,
-              justifyContent: 'flex-start',
-              flexDirection: 'row',
-              alignItems: 'center',
-            }}>
-            <Text
               style={{
                 color: 'white',
                 fontWeight: '500',
@@ -358,7 +325,11 @@ const EditProfile = ({route}) => {
               Name:
             </Text>
             <TextInput
-              style={{color: 'white', fontSize: 14}}
+              style={{
+                color: 'white',
+                fontSize: 14,
+                width: 200,
+              }}
               clearTextOnFocus={true}
               numberOfLines={1}
               value={new_name === 'null' ? null : new_name}
@@ -386,7 +357,7 @@ const EditProfile = ({route}) => {
               Username:
             </Text>
             <TextInput
-              style={{color: 'white', fontSize: 14}}
+              style={{color: 'white', fontSize: 14, width: 200}}
               clearTextOnFocus={true}
               value={new_username === 'null' ? null : new_username}
               numberOfLines={1}
@@ -414,7 +385,7 @@ const EditProfile = ({route}) => {
               Location:
             </Text>
             <TextInput
-              style={{color: 'white', fontSize: 14}}
+              style={{color: 'white', fontSize: 14, width: 200}}
               clearTextOnFocus={true}
               value={new_location === 'null' ? null : new_location}
               numberOfLines={1}
@@ -442,7 +413,7 @@ const EditProfile = ({route}) => {
               Bio:
             </Text>
             <TextInput
-              style={{color: 'white', fontSize: 14}}
+              style={{color: 'white', fontSize: 14, width: 200}}
               clearTextOnFocus={true}
               value={new_bio === 'null' ? null : new_bio}
               onChangeText={setBio}
@@ -484,6 +455,22 @@ const EditProfile = ({route}) => {
           </View>
         </View>
       </KeyboardAwareScrollView>
+      {loading == true ? (
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            backgroundColor: 'rgba(12, 12, 12, 0.5)',
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            alignItems: 'center',
+          }}>
+          <ActivityIndicator size="small" />
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 };

@@ -4,7 +4,7 @@ import context from './context';
 import axios from 'axios';
 import envs from '../../Config/env';
 
-const BACKEND_URL = envs.DEV_URL;
+const BACKEND_URL = envs.PROD_URL;
 
 const defaultValue = {
   errorMessage: '',

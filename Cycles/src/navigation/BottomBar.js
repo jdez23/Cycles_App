@@ -14,7 +14,6 @@ import MyProfile from '../screens/MyProfile/MyProfile';
 import {Context as NotifContext} from '../context/NotifContext';
 
 const Tab = createBottomTabNavigator();
-const windowH = Dimensions.get('window').height;
 
 const BottomBar = () => {
   const notifContext = useContext(NotifContext);
@@ -61,7 +60,6 @@ const BottomBar = () => {
           name="DiscoverFeed"
           component={DiscoverFeed}
           options={{
-            // unmountOnBlur: true,
             tabBarIcon: ({focused}) => {
               return (
                 <Ionicons

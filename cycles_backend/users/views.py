@@ -1,6 +1,5 @@
 from .serializers import *
 from .models import *
-import os
 
 from rest_framework import viewsets, permissions, generics, status
 from rest_framework.views import APIView
@@ -8,8 +7,7 @@ from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.parsers import MultiPartParser, FormParser
-from google.cloud import storage
-from google.oauth2 import service_account
+from django.http import JsonResponse
 
 
 class CustomAuthToken(ObtainAuthToken):
@@ -33,29 +31,33 @@ class CreateUser(APIView):
     queryset = User.objects.all()
 
     def post(self, request):
-        credentials = service_account.Credentials.from_service_account_file(
-            os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
-        )
-        fb_id = request.META.get('HTTP_AUTHORIZATION')
-        avi_pic = request.data.get('avi_pic')
+        fb_id = request.data.get('token')
+        avi_pic = request.FILES.get('avi_pic')
         username = request.data.get('username')
+        credentials = service_account.Credentials.from_service_account_file(
+            os.environ.get('GCS_CREDENTIALS')
+        )
         try:
-            user = User.objects.get(username=username)
-            return Response({'error': 'Username is already taken.'}, status=status.HTTP_400_BAD_REQUEST)
-        except User.DoesNotExist:
+            # Check if username already exists in the user database
+            if User.objects.filter(username=username).exists():
+                return Response({'error': 'Username is already taken.'}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Upload avi image to Cloud Storage
+            # Get the image URL from Google Cloud Storage
             client = storage.Client(credentials=credentials)
-            bucket = client.get_bucket('all_imgs')
-            blob = bucket.blob(avi_pic)
-            blob.upload_from_string(avi_pic)
+            bucket = client.bucket(os.environ.get('GS_BUCKET_NAME'))
+            blob = bucket.blob(f"media/avi_images/{avi_pic.name}")
+            blob.upload_from_file(avi_pic)
+            image_url = blob.public_url
 
-            # Save user in model database
+            # Create and save the new user
             user = User.objects.create(
-                firebase_id=fb_id, avi_pic=avi_pic, username=username)
+                firebase_id=fb_id, avi_pic=image_url, username=username)
             user.save()
+
             serializer = UserRegisterSerializer(user)
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
         except:
             return Response({'error': 'An unexpected error occurred.'}, status=500)
 
@@ -69,7 +71,6 @@ class Login(APIView):
             user = User.objects.get(firebase_id=fb_id)
             if user:
                 serializer = UserLoginSerializer(user)
-                print(serializer.data)
                 return Response({'data': serializer.data})
             else:
                 return Response(status=404)
@@ -84,6 +85,96 @@ class UserViewSet(viewsets.ModelViewSet):
     parser_classes = (MultiPartParser, FormParser)
     serializer_class = UserSerializer
     queryset = User.objects.all()
+
+    def update(self, request, *args, **kwargs):
+        # Get data
+        user = self.request.user.id
+        old_avi_pic = User.objects.get(id=user).avi_pic
+        old_header_pic = User.objects.get(id=user).header_pic
+        header_pic = request.FILES.get('header_pic')
+        avi_pic = request.FILES.get('avi_pic')
+        name = request.data.get('name')
+        username = request.data.get('username')
+        location = request.data.get('location')
+        bio = request.data.get('bio')
+        spotify_url = request.data.get('spotify_url')
+        credentials = service_account.Credentials.from_service_account_file(
+            os.environ.get('GCS_CREDENTIALS')
+        )
+        try:
+            # Get and delete old avi and header images from Google Cloud Storage
+            client = storage.Client(credentials=credentials)
+            bucket = client.bucket(os.environ.get('GS_BUCKET_NAME'))
+
+            try:
+                old_avi_blob = bucket.blob(
+                    f"media/avi_images/{old_avi_pic}")
+                if old_avi_blob:
+                    old_avi_blob.delete()
+            except:
+                None
+
+            try:
+                old_header_blob = bucket.blob(
+                    f"media/header_images/{old_header_pic}")
+                if old_header_blob:
+                    old_header_blob.delete()
+            except:
+                None
+
+            # Add images to bucket
+            if avi_pic:
+                avi_blob = bucket.blob(f"media/avi_images/{avi_pic.name}")
+                avi_blob.upload_from_file(avi_pic)
+
+            if header_pic:
+                header_blob = bucket.blob(
+                    f"media/header_images/{header_pic.name}")
+                header_blob.upload_from_file(header_pic)
+
+            # Update user model
+            _user = User.objects.get(id=user)
+
+            _user.avi_pic = avi_pic
+            _user.header_pic = header_pic
+            _user.name = name
+            _user.username = username
+            _user.location = location
+            _user.bio = bio
+            _user.spotify_url = spotify_url
+
+            _user.save(update_fields=['avi_pic',
+                                      'header_pic', 'name', 'username', 'location', 'bio', 'spotify_url'])
+
+            return Response(status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return JsonResponse({'error': 'An unexpected error occurred.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def destroy(self, request):
+        user = self.request.user
+        avi_pic = User.objects.get(id=user).avi_pic
+        header_pic = User.objects.get(id=user).header_pic
+        credentials = service_account.Credentials.from_service_account_file(
+            os.environ.get('GCS_CREDENTIALS')
+        )
+        try:
+            # Get the image URL from Google Cloud Storage
+            client = storage.Client(credentials=credentials)
+            bucket = client.bucket(os.environ.get('GS_BUCKET_NAME'))
+
+            avi_blob = bucket.blob(f"media/avi_images/{avi_pic}")
+            avi_blob.delete()
+
+            header_blob = bucket.blob(f"media/header_images/{header_pic}")
+            header_blob.delete()
+
+            User.objects.get(id=user).delete()
+
+            return Response(status=status.HTTP_200_OK)
+
+        except:
+            return Response({'error': 'An unexpected error occurred.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # Follow or Unfollow user
@@ -116,7 +207,6 @@ class FollowingView(APIView):
         user = request.GET.get('user')
         following_user = request.GET.get('following_user')
         try:
-            # follower = Follow.objects.filter(following_user=following_user).filter(user=user).delete()
             followers = Follow.objects.filter(following_user=following_user)
             user = followers.get(user=user).delete()
             return Response(status=status.HTTP_200_OK)
@@ -155,13 +245,10 @@ class UsersFollowers(generics.ListAPIView):
         except:
             return Response({'error': 'An unexpected error occurred.'}, status=500)
 
+
 # POST & DELETE Subscription
-
-
 class SubscriptionView(APIView):
     queryset = Subscription.objects.all()
-    # parser_classes = [MultiPartParser, FormParser]
-    # serializer_class = SubscriptionSerializer
 
     def post(self, request):
         email = request.data.get('email')
@@ -169,7 +256,7 @@ class SubscriptionView(APIView):
         save_email = Subscription.objects.create(email=email)
         save_email.save()
 
-        return 'thank you'
+        return Response({'message': 'Thank you!'})
 
     def delete(request):
         email = request.data.get('email')

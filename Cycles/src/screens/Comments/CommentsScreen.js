@@ -9,6 +9,8 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Dimensions,
+  ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
 
 import Swipeable from 'react-native-gesture-handler/Swipeable';
@@ -33,7 +35,6 @@ const CommentsScreen = route => {
   const [toast, setToast] = useState('');
   const window = Dimensions.get('window').width;
   const comments = playlistContext?.state?.comments;
-  const me = authContext?.state.user_id;
 
   useEffect(() => {
     if (playlistContext?.state?.errorMessage) {
@@ -41,15 +42,14 @@ const CommentsScreen = route => {
         Toast.show(playlistContext?.state?.errorMessage, {
           duration: Toast.durations.SHORT,
           position: Toast.positions.CENTER,
-          onHidden: () => dispatch({type: 'clear_error_message'}),
+          onHidden: () =>
+            playlistContext?.dispatch({type: 'clear_error_message'}),
         }),
       );
     } else if (toast) {
       Toast.hide(toast);
     }
   }, [playlistContext?.state?.errorMessage]);
-
-  // console.log('comments', me);
 
   // Call to get playlist' comments
   useEffect(() => {
@@ -71,7 +71,9 @@ const CommentsScreen = route => {
   const onRefresh = () => {
     setIsRefreshing(true);
     setLoadingData(true);
-    playlistContext?.getComments(playlist_id);
+    playlistContext?.getComments(
+      route?.route?.params?.item?.playlist_id || data?.playlist_id,
+    );
     loadingData == true ? (
       <View
         style={{
@@ -92,6 +94,16 @@ const CommentsScreen = route => {
       to_user: data?.to_user,
       title: title,
     });
+    playlistContext?.getComments(
+      route?.route?.params?.item?.playlist_id || data?.playlist_id,
+    );
+  };
+
+  onDelete = item => {
+    playlistContext?.deleteComment(item.id);
+    playlistContext?.getComments(
+      route?.route?.params?.item?.playlist_id || data?.playlist_id,
+    );
   };
 
   //Navigate to user profile
@@ -105,7 +117,7 @@ const CommentsScreen = route => {
   const rightSwipeActions = item => {
     return (
       <Pressable
-        onPress={() => playlistContext?.deleteComment(item.id)}
+        onPress={() => onDelete(item)}
         style={{
           backgroundColor: 'red',
           justifyContent: 'center',
@@ -133,13 +145,11 @@ const CommentsScreen = route => {
         <View
           style={{
             flexDirection: 'row',
-            // justifyContent: 'space-between',
             alignItems: 'flex-start',
             width: window,
             marginTop: 10,
             marginBottom: 10,
             paddingLeft: 12,
-            // backgroundColor: 'brown',
           }}>
           {item?.avi_pic ? (
             <Pressable
@@ -157,7 +167,7 @@ const CommentsScreen = route => {
                   borderRadius: 30,
                   backgroundColor: '#1f1f1f',
                 }}
-                source={item?.avi_pic}
+                source={{uri: item?.avi_pic}}
               />
             </Pressable>
           ) : null}
@@ -184,7 +194,7 @@ const CommentsScreen = route => {
                       textAlign: 'left',
                       color: 'white',
                       fontSize: 13,
-                      fontWeight: '600',
+                      fontWeight: '500',
                     }}>
                     {item?.username}
                   </Text>
@@ -195,7 +205,6 @@ const CommentsScreen = route => {
                   style={{
                     color: 'lightgrey',
                     fontSize: 11,
-                    fontWeight: '500',
                     marginLeft: 6,
                   }}>
                   {moment(item?.date).fromNow()}
@@ -207,8 +216,7 @@ const CommentsScreen = route => {
                 style={{
                   textAlign: 'left',
                   color: 'lightgrey',
-                  fontSize: 13,
-                  fontWeight: '500',
+                  fontSize: 12,
                   marginTop: 2,
                 }}>
                 {item?.title}
@@ -307,85 +315,74 @@ const CommentsScreen = route => {
     );
 
   return (
-    <SafeAreaView style={{backgroundColor: '#0C0C0C', flex: 1}}>
-      <View style={styles.container}>
-        <Pressable onPress={onBack}>
-          <View style={styles.back}>
-            <Ionicons name="chevron-back" size={25} color={'white'} />
-          </View>
-        </Pressable>
-        <Text style={{fontWeight: '700', fontSize: 15, color: 'white'}}>
-          Comments
-        </Text>
-        <View style={{height: 50, width: 50, justifyContent: 'center'}} />
-      </View>
-      <FlatList
-        data={comments}
-        refreshing={isRefreshing}
-        onRefresh={onRefresh}
-        renderItem={_renderItem}></FlatList>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderTopWidth: 0.5,
-          borderTopColor: '#1f1f1f',
-          paddingHorizontal: 12,
-          height: 75,
-        }}>
-        <View
-          style={{
-            height: 45,
-            width: 45,
-            borderRadius: 30,
-            backgroundColor: '#1f1f1f',
-          }}>
-          <Image source={playlistContext?.state.avi_pic} />
+    <KeyboardAvoidingView
+      style={{flex: 1, backgroundColor: '#0c0c0c'}}
+      keyboardVerticalOffset={47}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <SafeAreaView style={{backgroundColor: '#0C0C0C', flex: 1}}>
+        <View style={styles.container}>
+          <Pressable onPress={onBack}>
+            <View style={styles.back}>
+              <Ionicons name="chevron-back" size={25} color={'white'} />
+            </View>
+          </Pressable>
+          <Text style={{fontWeight: '600', fontSize: 15, color: 'white'}}>
+            Comments
+          </Text>
+          <View style={{height: 50, width: 50, justifyContent: 'center'}} />
         </View>
+        <FlatList
+          data={comments}
+          refreshing={isRefreshing}
+          onRefresh={onRefresh}
+          renderItem={_renderItem}></FlatList>
         <View
           style={{
-            height: 45,
-            width: 320,
-            borderWidth: 1,
-            borderRadius: 30,
-            borderColor: '#1f1f1f',
             flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignContent: 'center',
-            left: 6,
+            borderTopWidth: 0.5,
+            borderTopColor: '#1f1f1f',
             paddingHorizontal: 12,
+            height: 'auto',
+            paddingVertical: 12,
+            minHeight: 75,
           }}>
           <TextInput
+            multiline={true}
+            keyboardType="default"
             style={{
               color: 'white',
-              fontWeight: '500',
-              height: 45,
-              width: 230,
+              height: 'auto',
+              minHeight: 45,
+              flex: 1,
+              borderWidth: 1,
+              borderRadius: 30,
+              borderColor: '#1f1f1f',
+              paddingHorizontal: 12,
+              paddingVertical: 12,
+              alignSelf: 'center',
+              paddingTop: 13,
             }}
+            placeholderTextColor={'grey'}
             value={title}
             placeholder="Comment..."
             onChangeText={setTitle}></TextInput>
-          {title.length > 0 ? (
-            <Pressable
-              onPress={() => onComment(title)}
-              style={{
-                height: 45,
-                width: 60,
-                alignItems: 'flex-end',
-                justifyContent: 'center',
-                borderRadius: 30,
-                left: 12,
-              }}>
-              <Text style={{color: '#0C8ECE', fontWeight: '500', right: 12}}>
-                Post
-              </Text>
-            </Pressable>
-          ) : null}
+          <TouchableOpacity
+            disabled={title.length < 1}
+            onPress={() => onComment(title)}
+            style={{
+              height: 45,
+              width: 60,
+              alignItems: 'center',
+              justifyContent: 'center',
+              alignSelf: 'flex-end',
+            }}>
+            <Text style={{color: title.length > 0 ? '#0C8ECE' : 'grey'}}>
+              Post
+            </Text>
+          </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 };
 

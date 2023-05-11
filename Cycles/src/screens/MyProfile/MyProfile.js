@@ -15,15 +15,11 @@ import {
 import {useNavigation} from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Spotify_Icon_RGB_Green from '../../../assets/logos/Spotify_Icon_RGB_Green.png';
-import axios from 'axios';
 import RNSInfo from 'react-native-sensitive-info';
 import {Context as AuthContext} from '../../context/AuthContext';
 import {Context as PlaylistContext} from '../../context/PlaylistContext';
 import Toast from 'react-native-root-toast';
 import {Linking} from 'react-native';
-import envs from '../../../Config/env';
-
-const BACKEND_URL = envs.DEV_URL;
 
 const window = Dimensions.get('window').width;
 
@@ -86,8 +82,6 @@ const MyProfile = () => {
     });
   };
 
-  // console.log(profileData[0].name);
-
   const onEditProfile = () => {
     navigation.navigate({
       name: 'EditProfile',
@@ -133,7 +127,9 @@ const MyProfile = () => {
                 width: window,
               }}>
               <Image
-                source={`${BACKEND_URL}/media/media/header_images/27BF0950-FB61-46A4-9B97-F5D3DA3E32EC_QB3b7fH.jpg`}
+                source={{
+                  uri: playlistContext?.state?.myProfileData?.header_pic,
+                }}
                 style={{height: 200, width: window}}
               />
             </View>
@@ -177,7 +173,7 @@ const MyProfile = () => {
                       alignSelf: 'center',
                     }}
                     source={{
-                      uri: `${BACKEND_URL}/media/media/avi_images/14D5EC08-FB32-4F75-8A08-835FE133E636.jpg`,
+                      uri: playlistContext?.state?.myProfileData?.avi_pic,
                     }}
                   />
                 </View>
@@ -211,7 +207,7 @@ const MyProfile = () => {
                 </Text>
               </View>
             )}
-            {!playlistContext?.state?.myProfileData?.bio ? null : (
+            {playlistContext?.state?.myProfileData?.bio ? (
               <View
                 style={{
                   width: 300,
@@ -228,7 +224,7 @@ const MyProfile = () => {
                   {playlistContext?.state?.myProfileData?.bio}
                 </Text>
               </View>
-            )}
+            ) : null}
             <View
               style={{
                 flexDirection: 'row',
@@ -324,7 +320,7 @@ const MyProfile = () => {
               )}
               <TouchableHighlight
                 onPress={onEditProfile}
-                style={{marginTop: 4}}>
+                style={{marginTop: 4, borderRadius: 20}}>
                 <View
                   style={{
                     height: 35,
@@ -355,8 +351,6 @@ const MyProfile = () => {
     <View
       key={item.id}
       style={{
-        // alignItems: 'center',
-        // backgroundColor: 'brown',
         flex: 1,
         marginHorizontal: 12,
       }}>
@@ -366,7 +360,7 @@ const MyProfile = () => {
           flexDirection: 'column',
           alignItems: 'center',
           width: window / 2 - 24,
-          // backgroundColor: 'darkgreen',
+          marginBottom: 8,
         }}>
         {item.playlist_cover ? (
           <Image
@@ -418,11 +412,11 @@ const MyProfile = () => {
 
   return playlistContext?.state?.myProfileData ? (
     <SafeAreaView
-      style={StyleSheet.create({
+      style={{
         backgroundColor: '#0C0C0C',
         flex: 1,
         width: window,
-      })}>
+      }}>
       <View style={styles.container} blurRadius={1}>
         <View style={{height: 50, width: 50}} />
         {playlistContext?.state?.myProfileData ? (
@@ -430,18 +424,21 @@ const MyProfile = () => {
             {playlistContext?.state?.myProfileData.username}
           </Text>
         ) : null}
-        <View style={{height: 50, width: 50, justifyContent: 'center'}}>
-          <Pressable onPress={() => onProfileSettings()}>
-            <TouchableOpacity onPress={() => onProfileSettings()}>
-              <Ionicons
-                name="ellipsis-horizontal"
-                size={25}
-                color={'white'}
-                style={{alignSelf: 'center'}}
-              />
-            </TouchableOpacity>
-          </Pressable>
-        </View>
+        <TouchableOpacity
+          style={{
+            height: 50,
+            width: 50,
+            justifyContent: 'center',
+            borderRadius: 20,
+          }}
+          onPress={() => onProfileSettings()}>
+          <Ionicons
+            name="ellipsis-horizontal"
+            size={25}
+            color={'white'}
+            style={{alignSelf: 'center'}}
+          />
+        </TouchableOpacity>
       </View>
       <View style={{flex: 1, justifyContent: 'center'}}>
         <FlatList

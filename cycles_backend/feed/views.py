@@ -3,7 +3,6 @@ import environ
 from rest_framework import viewsets, status, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from spotify_api.views import SpotifyPlaylistTracks
 from spotify_api.util import execute_spotify_api_request, is_spotify_authenticated
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.db.models import Q
@@ -12,9 +11,8 @@ from .serializers import *
 from .models import *
 from django.http import JsonResponse
 from users.models import Follow
-# from google.cloud import storage
 from google.oauth2 import service_account
-import google.cloud.storage as storage
+from google.cloud import storage
 
 # Create your views here.
 
@@ -28,7 +26,7 @@ class PlaylistViewSet(viewsets.ModelViewSet):
             playlist = Playlist.objects.all().order_by('?')
             return playlist
         except:
-            return JsonResponse({'error': 'An unexpected error occurred.'}, status=500)
+            return Response(status=500)
 
 
 # GET PLAYLIST DETAILS
@@ -83,9 +81,6 @@ class MyPlaylists(APIView):
             return JsonResponse({'error': 'An unexpected error occurred.'}, status=500)
 
     def post(self, request):
-        credentials = service_account.Credentials.from_service_account_file(
-            os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
-        )
 
         try:
             form_data = request.data
@@ -110,13 +105,13 @@ class MyPlaylists(APIView):
             if "items" not in response:
                 return JsonResponse({'error': 'Failed to retrieve playlist tracks from the Spotify API.'}, status=500)
 
-            # Initialize an empty list for the tracks
+            # # Initialize an empty list for the tracks
             tracks = []
 
-            # Loop through the items in the playlist
+            # # Loop through the items in the playlist
             for item in response["items"]:
 
-                # Initialize an empty dictionary for the current track
+                #     # Initialize an empty dictionary for the current track
                 track = {}
 
                 # Extract data from spotify api playlist
@@ -150,61 +145,42 @@ class MyPlaylists(APIView):
 
             # Iterate images
             for image in images:
-
-                # Upload playlist image to Cloud Storage
-                client = storage.Client(credentials=credentials)
-                bucket = client.get_bucket('all_imgs')
-                blob = bucket.blob(image)
-                blob.upload_from_string(image)
+                client = storage.Client.from_service_account_json(
+                    settings.GCS_CREDENTIALS)
+                bucket = client.bucket(os.environ.get('GS_BUCKET_NAME'))
+                blob = bucket.blob(f"media/playlist_images/{image.name}")
+                blob.upload_from_file(image)
 
                 # Save images to db
                 playlist_image = PlaylistImages.objects.create(
-                    playlist=playlist, image=image)
+                    playlist=playlist, image=image.name)
                 playlist_image.save()
                 PlaylistImagesSerializer(playlist_image)
-
             return Response(status=status.HTTP_201_CREATED)
         except:
-            return JsonResponse({'error': 'An unexpected error occurred.'}, status=500)
+            return JsonResponse(status=500)
 
-    # LETS CURRENT USER UNLIKE PLAYLIST
     def delete(self, request, format=None):
+        playlist_id = request.GET.get('id')
+        playlist = Playlist.objects.get(id=playlist_id)
+        credentials = service_account.Credentials.from_service_account_file(
+            settings.GCS_CREDENTIALS
+        )
         try:
-            playlist_id = request.GET.get('id')
-            user = self.request.user
+            images = PlaylistImages.objects.filter(playlist=playlist)
+            # print(images)
+            for i in images:
+                # Get the image URL from Google Cloud Storage
+                client = storage.Client(credentials=credentials)
+                bucket = client.bucket(os.environ.get('GS_BUCKET_NAME'))
+                image = bucket.blob(f"media/playlist_images/{i.image}")
+                image.delete()
 
-            Playlist.objects.get(id=playlist_id).delete()
+            playlist = Playlist.objects.get(id=playlist_id).delete()
 
             return Response(status=status.HTTP_200_OK)
         except:
             return JsonResponse({'error': 'An unexpected error occurred.'}, status=500)
-
-    """ def get(self, request):
-        query = Playlist.objects.all()
-        serializer = PlaylistSerializer(query, many=True)
-        data = []
-        for playlist in serializer.data:
-            playlist_like = Like.objects.filter(
-                playlist=playlist['id']).filter(like=True).count()
-            mylike = Like.objects.filter(playlist=playlist['id']).filter(
-                user=request.user).first()
-            if mylike:
-                playlist['like'] = mylike.like
-            else:
-                playlist['like'] = False
-            playlist['totallike'] = playlist_like
-            comment_query = Comment.objects.filter(playlist=playlist['id'])
-            comment_serializer = CommentSerializer(
-                comment_query, many=True)
-            comment_data = []
-            for comment in comment_serializer.data:
-                reply_query = Reply.objects.filter(comment=comment['id'])
-                reply_serializer = ReplySerializer(reply_query, many=True)
-                comment['reply'] = reply_serializer.data
-                comment_data.append(comment)
-            playlist['comment'] = comment_serializer.data
-            data.append(playlist)
-        return Response(data) """
 
 
 # GET PLAYLIST FROM USERS I'M FOLLOWING + MINE
@@ -292,9 +268,9 @@ class CommentView(APIView):
             comment.save()
             serializer = CommentSerializer(comment)
 
-            return Response(serializer.data.order_by('-date'), status=status.HTTP_201_CREATED)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         except:
-            return JsonResponse({'error': 'An unexpected error occurred.'}, status=500)
+            return JsonResponse(status=500)
 
     # LETS USER DELETE SPECIFIC COMMENT
     def delete(self, request):
@@ -308,15 +284,14 @@ class CommentView(APIView):
     # GETS ALL COMMENTS FOR CURRENT PLAYLIST
     def get(self, request):
         try:
-            playlist_id = request.GET.get('id')
+            playlist_id = request.query_params.get('id')
             playlist = Playlist.objects.get(id=playlist_id)
             comment = Comment.objects.filter(playlist=playlist)
-
             serializer = CommentSerializer(comment, many=True)
 
             return Response(serializer.data, status=status.HTTP_200_OK)
         except:
-            return JsonResponse({'error': 'An unexpected error occurred.'}, status=500)
+            return JsonResponse({'error': 'An unexpected error occurred.'})
 
 
 class SearchView(generics.ListAPIView):
@@ -338,42 +313,3 @@ class SearchView(generics.ListAPIView):
             return queryset_playlists
         else:
             return None
-
-
-# class SearchView(generics.ListAPIView):
-#     serializer_class = SearchPlaylistSerializer
-
-#     def get_serializer_class(self):
-#         queryset_users = User.objects.filter(
-#             Q(name__icontains=self.request.query_params.get('q', '')) |
-#             Q(username__icontains=self.request.query_params.get('q', '')))
-
-#         queryset_playlists = Playlist.objects.filter(
-#             Q(playlist_title__icontains=self.request.query_params.get('q', '')))
-
-#         if queryset_users.exists() and queryset_playlists.exists():
-#             print(SearchPlaylistSerializer)
-#             print(SearchUserSerializer)
-#             return [SearchUserSerializer, SearchPlaylistSerializer]
-#         elif queryset_users.exists():
-#             return SearchUserSerializer
-#         elif queryset_playlists.exists():
-#             return SearchPlaylistSerializer
-#         else:
-#             raise Exception('No results found')
-
-#     def get_queryset(self):
-#         queryset_users = User.objects.filter(
-#             Q(name__icontains=self.request.query_params.get('q', '')) |
-#             Q(username__icontains=self.request.query_params.get('q', '')))
-
-#         queryset_playlists = Playlist.objects.filter(
-#             Q(playlist_title__icontains=self.request.query_params.get('q', '')))
-
-#         if queryset_users.exists() and queryset_playlists.exists():
-#             results = list(itertools.chain(queryset_users, queryset_playlists))
-#             return results
-#         elif queryset_users.exists():
-#             return queryset_users
-#         elif queryset_playlists.exists():
-#             return queryset_playlists

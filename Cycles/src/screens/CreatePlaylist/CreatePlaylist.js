@@ -15,6 +15,7 @@ import {
   Dimensions,
   TouchableOpacity,
   TouchableHighlight,
+  ActivityIndicator,
 } from 'react-native';
 import {Divider} from '@rneui/themed';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -28,13 +29,14 @@ import RNSInfo from 'react-native-sensitive-info';
 import Toast from 'react-native-root-toast';
 import envs from '../../../Config/env';
 
-const BACKEND_URL = envs.DEV_URL;
+const BACKEND_URL = envs.PROD_URL;
 
 const CreatePlaylist = () => {
   const window = Dimensions.get('window').width;
   let actionSheet = useRef();
   let optionArray = ['Spotify', 'Cancel'];
   const [toast, setToast] = useState(null);
+  const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
   const [images, setRenderImages] = useState([]);
   const [description, setDescription] = useState('');
@@ -42,6 +44,8 @@ const CreatePlaylist = () => {
   const playlistContext = useContext(PlaylistContext);
   const selected_playlist = playlistContext?.state?.selectedSpotifyPlaylist;
   const getToken = async () => await RNSInfo.getItem('token', {});
+  const continueDisabled =
+    !images || !selected_playlist || description.length < 1;
 
   //Listen for Callback URL
   useEffect(() => {
@@ -131,6 +135,7 @@ const CreatePlaylist = () => {
 
   //Spotify Callback
   const onSpotifyCallback = async url => {
+    console.log(url);
     if (url !== null) {
       const urlCallback = new URL(url.url);
       const code = urlCallback.searchParams.get('code');
@@ -152,14 +157,14 @@ const CreatePlaylist = () => {
 
   //Post playlist to API
   const postPlaylist = async () => {
+    setLoading(true);
     const token = await getToken();
     const formData = new FormData();
-
     images.forEach(image => {
       formData.append(`images`, {
         uri: image,
         type: 'image/jpeg',
-        name: image,
+        name: image + selected_playlist.id,
       });
     });
 
@@ -183,6 +188,7 @@ const CreatePlaylist = () => {
         body: formData,
       });
       if (res.status === 201) {
+        setLoading(false);
         playlistContext?.clearSelectedPlaylist();
         playlistContext?.getFollowersPlaylists();
         navigation.navigate('FollowingFeed');
@@ -193,6 +199,7 @@ const CreatePlaylist = () => {
         payload: 'Something went wrong. Please try again.',
       });
     }
+    setLoading(false);
   };
 
   //Navigate back to previous screen
@@ -201,38 +208,56 @@ const CreatePlaylist = () => {
     navigation.goBack(null);
   };
 
-  // console.log('---', selected_playlist?.name);
+  // // Function for loader
+  // if (loading) {
+  //   return (
+  //     <View
+  //       style={{
+  //         flex: 1,
+  //         justifyContent: 'center',
+  //         backgroundColor: 'rgba(12, 12, 12, 0.5)',
+  //         position: 'absolute',
+  //         top: 0,
+  //         bottom: 0,
+  //         left: 0,
+  //         right: 0,
+  //         alignItems: 'center',
+  //       }}>
+  //       <ActivityIndicator size="small" />
+  //     </View>
+  //   );
+  // }
 
   return (
     <SafeAreaView
       style={StyleSheet.create({backgroundColor: '#0C0C0C', flex: 1})}>
       <View style={styles.header}>
-        <Pressable onPress={() => cancel()}>
-          <View
-            style={{
-              height: 50,
-              width: 80,
-              justifyContent: 'center',
-            }}>
-            <TouchableOpacity onPress={() => cancel()}>
-              <Text style={styles.canceltext}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </Pressable>
+        <TouchableOpacity
+          style={{
+            height: 50,
+            width: 80,
+            justifyContent: 'center',
+          }}
+          onPress={() => cancel()}>
+          <Text style={styles.canceltext}>Cancel</Text>
+        </TouchableOpacity>
         <Text style={styles.header_text}>Upload Playlist</Text>
-        <Pressable onPress={() => postPlaylist()}>
-          <View
-            style={{
-              height: 50,
-              width: 80,
-              justifyContent: 'center',
-              alignItems: 'flex-end',
-            }}>
-            <TouchableOpacity onPress={() => postPlaylist()}>
-              <Text style={styles.posttext}>Share</Text>
-            </TouchableOpacity>
-          </View>
-        </Pressable>
+        <TouchableOpacity
+          disabled={continueDisabled}
+          style={{
+            height: 50,
+            width: 80,
+            justifyContent: 'center',
+            alignItems: 'flex-end',
+          }}
+          onPress={() => postPlaylist()}>
+          <Text
+            style={
+              continueDisabled ? styles.disabled_share_text : styles.share_text
+            }>
+            Share
+          </Text>
+        </TouchableOpacity>
       </View>
       <KeyboardAwareScrollView>
         <View style={{alignItems: 'center', height: window}}>
@@ -329,6 +354,7 @@ const CreatePlaylist = () => {
         <Divider width={0.2} color="grey" />
         <View style={styles.description_container}>
           <TextInput
+            multiline={true}
             style={styles.description_text}
             value={description}
             onChangeText={setDescription}
@@ -344,15 +370,37 @@ const CreatePlaylist = () => {
           onPress={onActionSelect}
         /> */}
       </KeyboardAwareScrollView>
+      {loading == true ? (
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            backgroundColor: 'rgba(12, 12, 12, 0.5)',
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            alignItems: 'center',
+          }}>
+          <ActivityIndicator size="small" />
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  posttext: {
+  share_text: {
     fontSize: 14,
     fontWeight: '500',
     color: '#0C8ECE',
+    paddingHorizontal: 12,
+  },
+  disabled_share_text: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: 'grey',
     paddingHorizontal: 12,
   },
   canceltext: {
@@ -398,6 +446,7 @@ const styles = StyleSheet.create({
   },
   description_container: {
     flexDirection: 'row',
+    paddingTop: 12,
   },
   description_text: {
     paddingHorizontal: 12,

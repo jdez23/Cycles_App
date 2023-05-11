@@ -1,61 +1,61 @@
 {
   "images" : [
     {
-      "filename" : "cycles_logo-20@2x.png",
+      "filename" : "Asset 24-100-20@2x.png",
       "idiom" : "iphone",
       "scale" : "2x",
       "size" : "20x20"
     },
     {
-      "filename" : "cycles_logo-20@3x.png",
+      "filename" : "Asset 24-100-20@3x.png",
       "idiom" : "iphone",
       "scale" : "3x",
       "size" : "20x20"
     },
     {
-      "filename" : "cycles_logo-29.png",
+      "filename" : "Asset 24-100-29.png",
       "idiom" : "iphone",
       "scale" : "1x",
       "size" : "29x29"
     },
     {
-      "filename" : "cycles_logo-29@2x.png",
+      "filename" : "Asset 24-100-29@2x.png",
       "idiom" : "iphone",
       "scale" : "2x",
       "size" : "29x29"
     },
     {
-      "filename" : "cycles_logo-29@3x.png",
+      "filename" : "Asset 24-100-29@3x.png",
       "idiom" : "iphone",
       "scale" : "3x",
       "size" : "29x29"
     },
     {
-      "filename" : "cycles_logo-40@2x.png",
+      "filename" : "Asset 24-100-40@2x.png",
       "idiom" : "iphone",
       "scale" : "2x",
       "size" : "40x40"
     },
     {
-      "filename" : "cycles_logo-40@3x.png",
+      "filename" : "Asset 24-100-40@3x.png",
       "idiom" : "iphone",
       "scale" : "3x",
       "size" : "40x40"
     },
     {
-      "filename" : "cycles_logo-60@2x.png",
+      "filename" : "Asset 24-100-60@2x.png",
       "idiom" : "iphone",
       "scale" : "2x",
       "size" : "60x60"
     },
     {
-      "filename" : "cycles_logo-60@3x.png",
+      "filename" : "Asset 24-100-60@3x.png",
       "idiom" : "iphone",
       "scale" : "3x",
       "size" : "60x60"
     },
     {
-      "filename" : "cycles_logo-1024.png",
+      "filename" : "Asset 24-100-1024.png",
       "idiom" : "ios-marketing",
       "scale" : "1x",
       "size" : "1024x1024"

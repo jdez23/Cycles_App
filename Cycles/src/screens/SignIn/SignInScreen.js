@@ -5,8 +5,7 @@ import {
   Image,
   Text,
   View,
-  Pressable,
-  Dimensions,
+  TouchableOpacity,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {Context as AuthContext} from '../../context/AuthContext';
@@ -18,11 +17,22 @@ import cycleshuman_1 from '/Users/jessehernandez/Cycles_App/Cycles/assets/logos/
 
 const SignIn = () => {
   const navigation = useNavigation();
-  const [number, setValue] = useState('');
-  const [loading, setLoading] = useState(false);
   const [country, setCountryCode] = useState('');
   const authContext = useContext(AuthContext);
   const [toast, setToast] = useState(null);
+  const [continueDisabled, setContinueDisabled] = useState(true);
+  const [number, setValue] = useState('');
+  const numberInput = useRef(null);
+
+  useEffect(() => {
+    setContinueDisabled(number.length < 1);
+  }, [number]);
+
+  useEffect(() => {
+    if (numberInput.current) {
+      numberInput.current.focus();
+    }
+  }, []);
 
   useEffect(() => {
     if (authContext?.state?.errorMessage) {
@@ -48,29 +58,21 @@ const SignIn = () => {
   }, [authContext?.state?.token]);
 
   const logInGoogle = () => {
-    setLoading(true);
     authContext?.onGoogleButtonPress();
   };
 
   const logInApple = () => {
-    setLoading(true);
     authContext?.onAppleButtonPress();
   };
 
-  // const onComplete = () => {
-  //   navigation.navigate({
-  //     name: 'OnBoardScreen',
-  //     params: authContext?.state?.token,
-  //   });
-  // };
-
-  const onContinue = () => {
-    console.log('pressed');
-    navigation.navigate({
-      name: 'ConfirmCode',
-      params: `${country}${number}`,
-    });
-    authContext?.signInWithPhone(`${country}${number}`);
+  const onContinue = async () => {
+    await authContext?.signInWithPhone(country);
+    if (authContext.state.confirmation) {
+      navigation.navigate({
+        name: 'ConfirmCode',
+        params: country,
+      });
+    }
   };
 
   return (
@@ -99,6 +101,7 @@ const SignIn = () => {
             }}>
             <View style={{alignItems: 'center'}}>
               <PhoneInput
+                inputRef={numberInput}
                 clearTextOnFocus={true}
                 placeholder="Phone number"
                 textInputProps={styles.numberInputProps}
@@ -119,8 +122,8 @@ const SignIn = () => {
                 defaultValue={number}
                 defaultCode="US"
                 layout="second"
-                onChange={text => {
-                  setValue({mobile: text.replace(/[^0-9]/g, '')});
+                onChangeText={text => {
+                  setValue(text.replace(/[^0-9]/g, ''));
                 }}
                 onChangeFormattedText={text => {
                   setCountryCode(text);
@@ -131,24 +134,18 @@ const SignIn = () => {
             <Text style={styles.smallPrint}>
               We'll send you a text to confirm your number.
             </Text>
-            {/* <Pressable onPress={() => onContinue()}>
-              <View style={styles.continueBox}>
+            <TouchableOpacity
+              disabled={continueDisabled}
+              onPress={() => onContinue()}>
+              <View
+                style={
+                  continueDisabled == true
+                    ? styles.continueBoxEmpty
+                    : styles.continueBox
+                }>
                 <Text style={styles.continueText}>Continue</Text>
               </View>
-            </Pressable> */}
-            {number ? (
-              <Pressable onPress={() => onContinue()}>
-                <View style={styles.continueBoxEmpty}>
-                  <Text style={styles.continueText}>Continue</Text>
-                </View>
-              </Pressable>
-            ) : (
-              <Pressable>
-                <View style={styles.continueBox}>
-                  <Text style={styles.continueText}>Continue</Text>
-                </View>
-              </Pressable>
-            )}
+            </TouchableOpacity>
           </View>
         </View>
         <View
@@ -175,7 +172,7 @@ const SignIn = () => {
           style={{
             top: 30,
           }}>
-          <Pressable onPress={() => logInGoogle()}>
+          <TouchableOpacity onPress={() => logInGoogle()}>
             <View style={styles.googleButton}>
               <Image
                 source={google_logo}
@@ -187,8 +184,8 @@ const SignIn = () => {
               />
               <Text style={styles.signup}>Continue with Google</Text>
             </View>
-          </Pressable>
-          <Pressable onPress={() => logInApple()}>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => logInApple()}>
             <View style={styles.appleButton}>
               <Image
                 source={apple_logo}
@@ -200,7 +197,7 @@ const SignIn = () => {
               />
               <Text style={styles.signup}>Continue with Apple</Text>
             </View>
-          </Pressable>
+          </TouchableOpacity>
         </View>
       </View>
     </SafeAreaView>
@@ -271,7 +268,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   continueBox: {
-    backgroundColor: '#E04326',
+    backgroundColor: '#32D74B',
     width: 350,
     height: 50,
     alignItems: 'center',
