@@ -96,7 +96,7 @@ const NotificationsScreen = () => {
     );
   };
 
-  const onNotif = item => {
+  const onNotif = async item => {
     if (item.type === 'comment') {
       navigation.navigate({
         name: 'CommentsScreen',

@@ -117,7 +117,7 @@ const DiscoverFeed = () => {
     <View
       style={{
         marginTop: 8,
-        marginHorizontal: 2,
+        marginHorizontal: item.length > 1 ? 2 : 12,
         marginBottom: 6,
         width: window / 2 - 12,
         alignItems: 'center',

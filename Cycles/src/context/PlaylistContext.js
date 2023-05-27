@@ -318,6 +318,50 @@ const getFollowersPlaylists = dispatch => async () => {
   }
 };
 
+// Post playlist
+const postPlaylist = dispatch => async selected_playlist => {
+  const formData = new FormData();
+  images.forEach(image => {
+    formData.append(`images`, {
+      uri: image,
+      type: 'image/jpeg',
+      name: image + selected_playlist.id,
+    });
+  });
+  formData.append('description', description);
+  formData.append('playlist_url', selected_playlist.external_urls.spotify);
+  formData.append('playlist_ApiURL', selected_playlist.href);
+  formData.append('playlist_id', selected_playlist.id);
+  formData.append('playlist_cover', selected_playlist.images[0].url);
+  formData.append('playlist_title', selected_playlist.name);
+  formData.append('playlist_type', selected_playlist.type);
+  formData.append('playlist_uri', selected_playlist.uri);
+  formData.append('playlist_tracks', selected_playlist.tracks.href);
+  try {
+    const res = await axios.post(
+      `${BACKEND_URL}/feed/my-playlist/`,
+      {
+        body: formData,
+      },
+      {
+        headers: {
+          Authorization: token,
+          Accept: 'application/json',
+          'Content-Type': 'multipart/form-data',
+        },
+      },
+    );
+    if (res.status === 201) {
+      return 201;
+    }
+  } catch (e) {
+    dispatch({
+      type: 'error_1',
+      payload: 'Something went wrong. Please try again.',
+    });
+  }
+};
+
 // Fetch playlist data
 const fetchPlaylist = dispatch => async id => {
   const token = await RNSInfo.getItem('token', {});
@@ -655,6 +699,7 @@ export const {Provider, Context} = context(
     getProfileData,
     getPlaylistData,
     getFollowersPlaylists,
+    postPlaylist,
     fetchPlaylist,
     deletePlaylist,
     getComments,

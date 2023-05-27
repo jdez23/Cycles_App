@@ -9,8 +9,9 @@ import envs from '../../Config/env';
 
 const BACKEND_URL = envs.PROD_URL;
 
-// Get Token from storage
+// Get Token/User from storage
 const getToken = async () => await RNSInfo.getItem('token', {});
+const currentUser = async () => await RNSInfo.getItem('user_id', {});
 
 const defaultValue = {
   user: 'false',
@@ -298,6 +299,32 @@ const signout = dispatch => async () => {
   }
 };
 
+//Update Profile to API
+const updateProfile = async formData => {
+  const currentUser = await currentUser();
+  const token = await getToken();
+  try {
+    const res = await axios.put(
+      `${BACKEND_URL}/users/user/${currentUser}/`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: token,
+        },
+      },
+    );
+    if (res.status === 200) {
+      return 200;
+    }
+  } catch (e) {
+    authContext?.dispatch({
+      type: 'error_1',
+      payload: 'Something went wrong. Please try again.',
+    });
+  }
+};
+
 const deleteAccount = dispatch => async user_id => {
   const token = await getToken();
   try {
@@ -447,6 +474,7 @@ export const {Provider, Context} = context(
     onGoogleButtonPress,
     signInWithPhone,
     confirmNumber,
+    updateProfile,
     signout,
     isSpotifyAuth,
     spotifyCallback,

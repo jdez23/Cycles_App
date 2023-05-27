@@ -68,6 +68,22 @@ const CreatePlaylist = () => {
     }
   }, [authContext?.state?.errorMessage]);
 
+  // Listen for playlist errors
+  useEffect(() => {
+    if (playlistContext?.state?.errorMessage) {
+      setToast(
+        Toast.show(playlistContext?.state?.errorMessage, {
+          duration: Toast.durations.SHORT,
+          position: Toast.positions.CENTER,
+          onHidden: () =>
+            playlistContext?.dispatch({type: 'clear_error_message'}),
+        }),
+      );
+    } else if (toast) {
+      Toast.hide(toast);
+    }
+  }, [playlistContext?.state?.errorMessage]);
+
   //  Listen for image updates
   useEffect(() => {
     images;
@@ -135,7 +151,6 @@ const CreatePlaylist = () => {
 
   //Spotify Callback
   const onSpotifyCallback = async url => {
-    console.log(url);
     if (url !== null) {
       const urlCallback = new URL(url.url);
       const code = urlCallback.searchParams.get('code');
@@ -158,48 +173,54 @@ const CreatePlaylist = () => {
   //Post playlist to API
   const postPlaylist = async () => {
     setLoading(true);
-    const token = await getToken();
-    const formData = new FormData();
-    images.forEach(image => {
-      formData.append(`images`, {
-        uri: image,
-        type: 'image/jpeg',
-        name: image + selected_playlist.id,
-      });
-    });
-
-    formData.append('description', description);
-    formData.append('playlist_url', selected_playlist.external_urls.spotify);
-    formData.append('playlist_ApiURL', selected_playlist.href);
-    formData.append('playlist_id', selected_playlist.id);
-    formData.append('playlist_cover', selected_playlist.images[0].url);
-    formData.append('playlist_title', selected_playlist.name);
-    formData.append('playlist_type', selected_playlist.type);
-    formData.append('playlist_uri', selected_playlist.uri);
-    formData.append('playlist_tracks', selected_playlist.tracks.href);
-    try {
-      const res = await fetch(`${BACKEND_URL}/feed/my-playlists/`, {
-        method: 'POST',
-        headers: {
-          Authorization: token,
-          Accept: 'application/json',
-          'Content-Type': 'multipart/form-data',
-        },
-        body: formData,
-      });
-      if (res.status === 201) {
-        setLoading(false);
-        playlistContext?.clearSelectedPlaylist();
-        playlistContext?.getFollowersPlaylists();
-        navigation.navigate('FollowingFeed');
-      }
-    } catch (e) {
-      authContext?.dispatch({
-        type: 'error_1',
-        payload: 'Something went wrong. Please try again.',
-      });
+    const post = await playlistContext.postPlaylist(selected_playlist, images);
+    if (post === 201) {
+      playlistContext?.clearSelectedPlaylist();
+      playlistContext?.getFollowersPlaylists();
+      setLoading(false);
+      navigation.navigate('FollowingFeed');
     }
     setLoading(false);
+    // const formData = new FormData();
+    // images.forEach(image => {
+    //   formData.append(`images`, {
+    //     uri: image,
+    //     type: 'image/jpeg',
+    //     name: image + selected_playlist.id,
+    //   });
+    // });
+    // formData.append('description', description);
+    // formData.append('playlist_url', selected_playlist.external_urls.spotify);
+    // formData.append('playlist_ApiURL', selected_playlist.href);
+    // formData.append('playlist_id', selected_playlist.id);
+    // formData.append('playlist_cover', selected_playlist.images[0].url);
+    // formData.append('playlist_title', selected_playlist.name);
+    // formData.append('playlist_type', selected_playlist.type);
+    // formData.append('playlist_uri', selected_playlist.uri);
+    // formData.append('playlist_tracks', selected_playlist.tracks.href);
+    // try {
+    //   const res = await fetch(`${BACKEND_URL}/feed/my-playlists/`, {
+    //     method: 'POST',
+    //     headers: {
+    //       Authorization: token,
+    //       Accept: 'application/json',
+    //       'Content-Type': 'multipart/form-data',
+    //     },
+    //     body: formData,
+    //   });
+    //   if (res.status === 201) {
+    //     setLoading(false);
+    //     playlistContext?.clearSelectedPlaylist();
+    //     playlistContext?.getFollowersPlaylists();
+    //     navigation.navigate('FollowingFeed');
+    //   }
+    // } catch (e) {
+    //   authContext?.dispatch({
+    //     type: 'error_1',
+    //     payload: 'Something went wrong. Please try again.',
+    //   });
+    // }
+    // setLoading(false);
   };
 
   //Navigate back to previous screen

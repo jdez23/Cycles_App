@@ -129,7 +129,7 @@ const FollowersList = route => {
         }}>
         <Image
           style={{height: 40, width: 40, borderRadius: 40}}
-          source={{uri: item.profilepic}}
+          source={{uri: item.avi_pic}}
         />
         <View
           style={{

@@ -100,36 +100,25 @@ const EditProfile = ({route}) => {
   //Update Profile to API
   const updateProfile = async () => {
     setLoading(true);
-    const currentUser = await getCurrentUser();
-    const token = await getToken();
     const formData = new FormData();
-    formData.append('header_pic', {
-      uri: new_header_pic,
-      type: 'image/jpeg',
-      name: new_header_pic,
-    });
-    formData.append('avi_pic', {
-      uri: new_avi_pic,
-      type: 'image/jpeg',
-      name: new_avi_pic,
-    });
-    formData.append('name', new_name);
-    formData.append('username', new_username);
-    formData.append('location', new_location);
-    formData.append('bio', new_bio);
-    formData.append('spotify_url', new_spotify_url);
     try {
-      const res = await axios.put(
-        `${BACKEND_URL}/users/user/${currentUser}/`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            Authorization: token,
-          },
-        },
-      );
-      if (res.status === 200) {
+      formData.append('header_pic', {
+        uri: data.new_header_pic,
+        type: 'image/jpeg',
+        name: data.new_header_pic,
+      });
+      formData.append('avi_pic', {
+        uri: new_avi_pic,
+        type: 'image/jpeg',
+        name: new_avi_pic,
+      });
+      formData.append('name', data.new_name);
+      formData.append('username', data.new_username);
+      formData.append('location', data.new_location);
+      formData.append('bio', data.new_bio);
+      formData.append('spotify_url', data.new_spotify_url);
+      const res = await authContext.updateProfile(formData);
+      if (res === 200) {
         setLoading(false);
         navigation.navigate('MyProfile');
       }
@@ -139,7 +128,47 @@ const EditProfile = ({route}) => {
         payload: 'Something went wrong. Please try again.',
       });
     }
-    setLoading(false);
+    setLoading(true);
+    // const currentUser = await getCurrentUser();
+    // const token = await getToken();
+    // const formData = new FormData();
+    // formData.append('header_pic', {
+    //   uri: new_header_pic,
+    //   type: 'image/jpeg',
+    //   name: new_header_pic,
+    // });
+    // formData.append('avi_pic', {
+    //   uri: new_avi_pic,
+    //   type: 'image/jpeg',
+    //   name: new_avi_pic,
+    // });
+    // formData.append('name', new_name);
+    // formData.append('username', new_username);
+    // formData.append('location', new_location);
+    // formData.append('bio', new_bio);
+    // formData.append('spotify_url', new_spotify_url);
+    // try {
+    //   const res = await axios.put(
+    //     `${BACKEND_URL}/users/user/${currentUser}/`,
+    //     formData,
+    //     {
+    //       headers: {
+    //         'Content-Type': 'multipart/form-data',
+    //         Authorization: token,
+    //       },
+    //     },
+    //   );
+    //   if (res.status === 200) {
+    //     setLoading(false);
+    //     navigation.navigate('MyProfile');
+    //   }
+    // } catch (e) {
+    //   authContext?.dispatch({
+    //     type: 'error_1',
+    //     payload: 'Something went wrong. Please try again.',
+    //   });
+    // }
+    // setLoading(false);
   };
 
   return (
