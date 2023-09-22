@@ -1,5 +1,5 @@
-**/cycles_frontend/.gitignore
-**/cycles_frontend/.env
-**/cycles_frontend/ios/GoogleService-Info.plist
-**/cycles_backend/firebase-config.json
-**/cycles_backend/gcs-config.json
+/cycles_frontend/.gitignore
+/cycles_frontend/.env
+/cycles_frontend/ios/GoogleService-Info.plist
+/cycles_backend/firebase-config.json
+/cycles_backend/gcs-config.json
