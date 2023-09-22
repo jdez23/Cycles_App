@@ -11,7 +11,6 @@ import {
   ActivityIndicator,
   Dimensions,
   TouchableHighlight,
-  TouchableOpacity,
 } from 'react-native';
 import React, {useEffect, useState, useContext} from 'react';
 import {useNavigation} from '@react-navigation/native';
@@ -117,7 +116,8 @@ const DiscoverFeed = () => {
     <View
       style={{
         marginTop: 8,
-        marginHorizontal: item.length > 1 ? 2 : 12,
+        marginHorizontal:
+          playlistContext?.state.allPlaylists.length > 1 ? 2 : 12,
         marginBottom: 6,
         width: window / 2 - 12,
         alignItems: 'center',
@@ -127,13 +127,13 @@ const DiscoverFeed = () => {
         style={{
           flexDirection: 'column',
           justifyContent: 'center',
+          width: window / 2 - 22,
         }}>
         {item.playlist_cover ? (
           <Image
             style={{
               width: window / 2 - 22,
               height: window / 2 - 22,
-              borderRadius: 2,
               backgroundColor: '#1f1f1f',
             }}
             source={{uri: item.playlist_cover}}
@@ -144,6 +144,7 @@ const DiscoverFeed = () => {
             flexDirection: 'row',
             alignItems: 'center',
             marginTop: 10,
+            width: window / 2 - 22,
           }}>
           <Pressable
             onPress={() => onUserPic(item)}
@@ -164,6 +165,7 @@ const DiscoverFeed = () => {
             style={{
               flexDirection: 'column',
               marginLeft: 8,
+              width: window / 2 - 60,
             }}>
             <View>
               <Text
@@ -209,7 +211,6 @@ const DiscoverFeed = () => {
           style={{
             width: 50,
             height: 50,
-            borderRadius: 2,
             backgroundColor: '#1f1f1f',
           }}
           source={{uri: item.playlist_cover}}
@@ -255,7 +256,7 @@ const DiscoverFeed = () => {
           flexDirection: 'row',
           justifyContent: 'space-between',
           alignItems: 'center',
-          paddingVertical: 10,
+          paddingVertical: 8,
           width: window,
           paddingHorizontal: 12,
         }}
@@ -266,7 +267,6 @@ const DiscoverFeed = () => {
               style={{
                 width: 50,
                 height: 50,
-                borderRadius: 2,
                 backgroundColor: '#1f1f1f',
               }}
               source={{
@@ -339,9 +339,7 @@ const DiscoverFeed = () => {
         const searchResults = response.data;
         setSearchUsers(searchResults[0].users);
         setSearchPlaylists(searchResults[0].playlists);
-      } catch (error) {
-        // console.error(error);
-      }
+      } catch (error) {}
   };
 
   return (
@@ -402,7 +400,7 @@ const DiscoverFeed = () => {
               style={{
                 color: 'white',
                 fontSize: 14,
-                fontWeight: '500',
+                fontWeight: '600',
               }}>
               Cancel
             </Text>
@@ -429,12 +427,13 @@ const DiscoverFeed = () => {
               keyExtractor={(item, index) => `${item.id}-${index}`}
               data={searchResults}
               numColumns={1}
+              initialNumToRender={10}
               renderItem={renderFilteredPlaylists}></FlatList>
           ) : (
             <FlatList
-              // keyExtractor={recentSearch => recentSearch.id}
               data={recentSearch}
               numColumns={1}
+              initialNumToRender={10}
               renderItem={renderRecentSearch}></FlatList>
           )
         ) : (
@@ -443,6 +442,7 @@ const DiscoverFeed = () => {
             key={playlistContext?.state.allPlaylists}
             renderItem={renderPlaylists}
             numColumns={2}
+            initialNumToRender={10}
             refreshing={isRefreshing}
             onRefresh={onRefresh}></FlatList>
         )}
@@ -453,19 +453,19 @@ const DiscoverFeed = () => {
 
 const styles = StyleSheet.create({
   screen: {
-    backgroundColor: '#0C0C0C',
+    backgroundColor: 'black',
     flex: 1,
   },
   columnWrapper: {
     justifyContent: 'space-evenly',
   },
   container: {
-    backgroundColor: '#0C0C0C',
+    backgroundColor: 'black',
     height: 50,
     alignItems: 'center',
   },
   text: {
-    fontSize: 32,
+    fontSize: window / 13,
     fontFamily: 'futura',
     fontWeight: 'bold',
     color: 'white',
@@ -477,8 +477,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     paddingHorizontal: 12,
-    borderBottomColor: '#262626',
-    borderBottomWidth: 0.3,
+    borderBottomColor: '#121212',
+    borderBottomWidth: 0.5,
   },
   search_container_pressed: {
     height: 50,
@@ -487,16 +487,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 12,
-    borderBottomColor: '#262626',
+    borderBottomColor: '#121212',
     borderBottomWidth: 0.3,
   },
   searchBarPressed: {
-    // flexDirection: 'row',
-    // alignItems: 'center',
-    // // backgroundColor: 'blue',
-    // height: 50,
     paddingHorizontal: 12,
-    backgroundColor: '#202020',
+    backgroundColor: '#121212',
     height: 35,
     borderRadius: 10,
     flexDirection: 'row',
@@ -506,33 +502,13 @@ const styles = StyleSheet.create({
   },
   searchBar: {
     paddingHorizontal: 12,
-    backgroundColor: '#202020',
+    backgroundColor: '#121212',
     height: 35,
     borderRadius: 10,
     flexDirection: 'row',
     alignItems: 'center',
     width: window - 24,
-    // justifyContent: 'center',
   },
-  // inputPressed: {
-  //   paddingHorizontal: 12,
-  //   backgroundColor: '#202020',
-  //   height: 35,
-  //   borderRadius: 10,
-  //   flexDirection: 'row',
-  //   alignItems: 'center',
-  //   width: window - 84,
-  //   justifyContent: 'space-evenly',
-  // },
-  // inputClosed: {
-  //   paddingHorizontal: 12,
-  //   backgroundColor: '#202020',
-  //   height: 35,
-  //   borderRadius: 10,
-  //   flexDirection: 'row',
-  //   alignItems: 'center',
-  //   width: window - 24,
-  // },
   textInput: {
     fontSize: 13,
     color: 'white',

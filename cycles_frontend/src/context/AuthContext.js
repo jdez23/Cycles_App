@@ -11,7 +11,6 @@ const BACKEND_URL = envs.PROD_URL;
 
 // Get Token/User from storage
 const getToken = async () => await RNSInfo.getItem('token', {});
-const currentUser = async () => await RNSInfo.getItem('user_id', {});
 
 const defaultValue = {
   user: 'false',
@@ -210,8 +209,6 @@ const onAppleButtonPress = dispatch => async () => {
         identityToken,
         nonce,
       );
-      //     in this example `signInWithCredential` is used, but you could also call `linkWithCredential`
-      //     to link the account to an existing user
       const userCredential = await firebase
         .auth()
         .signInWithCredential(appleCredential);
@@ -293,32 +290,6 @@ const signout = dispatch => async () => {
     }
   } catch (err) {
     dispatch({
-      type: 'error_1',
-      payload: 'Something went wrong. Please try again.',
-    });
-  }
-};
-
-//Update Profile to API
-const updateProfile = async formData => {
-  const currentUser = await currentUser();
-  const token = await getToken();
-  try {
-    const res = await axios.put(
-      `${BACKEND_URL}/users/user/${currentUser}/`,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization: token,
-        },
-      },
-    );
-    if (res.status === 200) {
-      return 200;
-    }
-  } catch (e) {
-    authContext?.dispatch({
       type: 'error_1',
       payload: 'Something went wrong. Please try again.',
     });
@@ -474,7 +445,6 @@ export const {Provider, Context} = context(
     onGoogleButtonPress,
     signInWithPhone,
     confirmNumber,
-    updateProfile,
     signout,
     isSpotifyAuth,
     spotifyCallback,

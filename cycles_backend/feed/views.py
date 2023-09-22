@@ -1,5 +1,4 @@
 import os
-import environ
 from rest_framework import viewsets, status, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -51,6 +50,84 @@ class PlaylistDetails(APIView):
         except:
             return JsonResponse({'error': 'An unexpected error occurred.'}, status=500)
 
+    def put(self, request):
+        try:
+            user = self.request.user
+            playlist_id = request.GET.get("playlist_id")
+            playlist = Playlist.objects.get(id=playlist_id)
+            spotify_playlistID = playlist.playlist_id
+
+            # Update playlist
+            is_spotify_authenticated(user)
+            playlist_endpoint = "v1/playlists/"+spotify_playlistID
+            response = execute_spotify_api_request(user, playlist_endpoint)
+
+            playlist.description = playlist.description
+            playlist.playlist_url = response["external_urls"]["spotify"]
+            playlist.playlist_ApiURL = response["href"]
+            playlist.playlist_id = response["id"]
+            playlist.playlist_cover = response["images"][0]["url"]
+            playlist.playlist_title = response["name"]
+            playlist.playlist_type = response["type"]
+            playlist.playlist_uri = response["uri"]
+            playlist.playlist_tracks = playlist.playlist_tracks
+
+            playlist.save(update_fields=['user',
+                                         'description', 'playlist_url', 'playlist_ApiURL', 'playlist_id', 'playlist_cover',
+                                         'playlist_title', 'playlist_type', 'playlist_uri', 'playlist_tracks'])
+
+            playlist_serializer = PlaylistDetailSerializer(playlist)
+
+            # Get Spotify playlist tracks
+            tracks = PlaylistTracks.objects.filter(playlist=playlist)
+            tracks.delete()
+
+            tracks_endpoint = 'v1/playlists/'+spotify_playlistID+"/tracks"
+            tracks_response = execute_spotify_api_request(
+                user, tracks_endpoint)
+
+            # Check if tracks are successfully retrieved
+            if "items" not in tracks_response:
+                return JsonResponse({'error': 'Failed to retrieve playlist tracks from the Spotify API.'}, status=500)
+
+            # # Initialize an empty list for the tracks
+            tracks = []
+
+            # # Loop through the items in the playlist
+            for item in tracks_response["items"]:
+                #     # Initialize an empty dictionary for the current track
+                track = {}
+
+                # Extract data from spotify api playlist
+                track["artist"] = item["track"]["artists"][0]["name"]
+                track["album"] = item["track"]["album"]["name"]
+                track["name"] = item["track"]["name"]
+                track["track_id"] = item["track"]["external_urls"]['spotify']
+                track["uri"] = item["track"]["uri"]
+                track["images"] = item["track"]["album"]["images"][2]['url']
+
+                # Add the current track to the list of tracks
+                tracks.append(track)
+
+            # Save tracks in db
+            for track in tracks:
+                playlist_track = PlaylistTracks.objects.create(
+                    playlist=playlist, artist=track['artist'], album=track['album'],
+                    name=track['name'], track_id=track['track_id'], uri=track['uri'], images=track['images']
+                )
+                playlist_track.save()
+                PlaylistTracksSerializer(playlist_track)
+
+            tracks = PlaylistTracks.objects.filter(playlist=playlist)
+            tracks_serializer = PlaylistTracksSerializer(tracks, many=True)
+
+            playlistDetails = {'playlistDetails': playlist_serializer.data,
+                               'playlistTracks': tracks_serializer.data}
+
+            return Response(playlistDetails, status=status.HTTP_200_OK)
+
+        except:
+            return JsonResponse({'error': 'An unexpected error occurred.'}, status=500)
 
 # GET SPECIFIC USERS PLAYLISTS (PROFILE SCREEN)
 class UserPlaylists(APIView):
@@ -158,7 +235,7 @@ class MyPlaylists(APIView):
                 PlaylistImagesSerializer(playlist_image)
             return Response(status=status.HTTP_201_CREATED)
         except:
-            return JsonResponse(status=500)
+            return JsonResponse({'error': 'An unexpected error occurred.'}, status=500)
 
     def delete(self, request, format=None):
         playlist_id = request.GET.get('id')

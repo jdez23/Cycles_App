@@ -6,30 +6,6 @@ import envs from '../../Config/env';
 const BACKEND_URL = envs.PROD_URL;
 
 const defaultValue = {
-  // avi_pic: null,
-  // date: null,
-  // description: null,
-  // images: null,
-  // location: null,
-  // playlist_ApiURL: null,
-  // playlist_cover: null,
-  // playlist_title: null,
-  // playlist_tracks: null,
-  // playlist_type: null,
-  // playlist_uri: null,
-  // playlist_url: null,
-  // user_id: null,
-  // username: null,
-  // track_cover: null,
-  // track_artist: null,
-  // track_album: null,
-  // track_title: null,
-  // track_url: null,
-  // track_uri: null,
-  // spotifyAuth: 'false',
-  // isLiked: 'false',
-  // isSelected: 'false',
-  // selectedSpotifyPlaylist: [],
   userProfileData: [],
   userPlaylistData: [],
   myProfileData: [],
@@ -415,6 +391,39 @@ const deletePlaylist = dispatch => async id => {
   }
 };
 
+// Update Spotify Playlist
+const updatePlaylist = dispatch => async playlist_id => {
+  const token = await RNSInfo.getItem('token', {});
+  try {
+    await axios
+      .put(
+        `${BACKEND_URL}/feed/playlist-details/?playlist_id=${playlist_id}`,
+        {},
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: token,
+          },
+        },
+      )
+      .then(res => {
+        dispatch({
+          type: 'playlistDetails',
+          playlist: res.data?.playlistDetails,
+        });
+        dispatch({
+          type: 'playlistTracks',
+          tracks: res.data?.playlistTracks,
+        });
+      });
+  } catch (err) {
+    dispatch({
+      type: 'error_1',
+      payload: 'Something went wrong. Please try again.',
+    });
+  }
+};
+
 // Get all comments for playlist
 const getComments = dispatch => async playlist_id => {
   const token = await RNSInfo.getItem('token', {});
@@ -530,6 +539,7 @@ const likePlaylist = dispatch => async route => {
   const token = await RNSInfo.getItem('token', {});
   const to_user = route.to_user;
   const playlist_cover = route.images;
+  console.log('[]', playlist_cover);
   const data = {
     to_user: to_user.toString(),
     title: 'Cycles',
@@ -702,6 +712,7 @@ export const {Provider, Context} = context(
     postPlaylist,
     fetchPlaylist,
     deletePlaylist,
+    updatePlaylist,
     getComments,
     comment,
     deleteComment,

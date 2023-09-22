@@ -16,7 +16,6 @@ import {
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import Toast from 'react-native-root-toast';
 import moment from 'moment';
-import {TouchableOpacity} from 'react-native-gesture-handler';
 import {useNavigation} from '@react-navigation/native';
 
 const window = Dimensions.get('window').width;

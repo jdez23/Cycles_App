@@ -35,23 +35,27 @@ class CreateUser(APIView):
         avi_pic = request.FILES.get('avi_pic')
         username = request.data.get('username')
         credentials = service_account.Credentials.from_service_account_file(
-            os.environ.get('GCS_CREDENTIALS')
+            settings.GCS_CREDENTIALS
         )
         try:
             # Check if username already exists in the user database
             if User.objects.filter(username=username).exists():
                 return Response({'error': 'Username is already taken.'}, status=status.HTTP_400_BAD_REQUEST)
 
+            allowed_characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-.'
+
+            if any(char not in allowed_characters for char in username):
+                return Response({'error': 'Invalid characters in username.'}, status=status.HTTP_400_BAD_REQUEST)
+
             # Get the image URL from Google Cloud Storage
             client = storage.Client(credentials=credentials)
             bucket = client.bucket(os.environ.get('GS_BUCKET_NAME'))
             blob = bucket.blob(f"media/avi_images/{avi_pic.name}")
             blob.upload_from_file(avi_pic)
-            image_url = blob.public_url
 
             # Create and save the new user
             user = User.objects.create(
-                firebase_id=fb_id, avi_pic=image_url, username=username)
+                firebase_id=fb_id, avi_pic=avi_pic.name, username=username)
             user.save()
 
             serializer = UserRegisterSerializer(user)
@@ -256,7 +260,15 @@ class SubscriptionView(APIView):
         save_email = Subscription.objects.create(email=email)
         save_email.save()
 
-        return Response({'message': 'Thank you!'})
+        if request.method == 'OPTIONS':
+            response = JsonResponse({'message': 'Preflight request received'})
+        else:
+            response = JsonResponse({'message': 'Thank you!'})
+
+        response['Access-Control-Allow-Methods'] = 'POST'
+        response['Access-Control-Allow-Headers'] = 'Content-Type'
+
+        return Response(response)
 
     def delete(request):
         email = request.data.get('email')
@@ -264,3 +276,4 @@ class SubscriptionView(APIView):
         Subscription.objects.filter(email=email).delete()
 
         return Response(status=status.HTTP_200_OK)
+        

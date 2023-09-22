@@ -35,7 +35,6 @@ const FollowingFeed = () => {
   const [toast, setToast] = useState(null);
   const playlistContext = useContext(PlaylistContext);
   const getUserID = async () => await RNSInfo.getItem('user_id', {});
-  const BACKEND_URL = envs.DEV_URL;
 
   useEffect(() => {
     requestUserPermission();
@@ -101,10 +100,11 @@ const FollowingFeed = () => {
       style={{
         marginVertical: 12,
         justifyContent: 'center',
-        width: window - 24,
+        width: window,
       }}>
       <View
         style={{
+          paddingHorizontal: 12,
           flexDirection: 'row',
           alignItems: 'center',
         }}>
@@ -149,7 +149,7 @@ const FollowingFeed = () => {
                 textAlign: 'left',
                 color: 'white',
                 fontSize: 13,
-                fontWeight: '500',
+                fontWeight: '600',
               }}>
               {item.username}
             </Text>
@@ -171,8 +171,7 @@ const FollowingFeed = () => {
         {item.first_image.images ? (
           <ImageBackground
             style={{
-              height: 260,
-              borderRadius: 3,
+              height: window,
               alignItems: 'center',
               justifyContent: 'flex-end',
               paddingBottom: 6,
@@ -183,13 +182,14 @@ const FollowingFeed = () => {
             }}>
             <Pressable
               onPress={() => onPlaylistDetail(item)}
-              style={{width: window - 36}}>
+              style={{width: window - 24}}>
               <View
                 style={{
                   height: 85,
                   backgroundColor: 'rgba(60, 60, 60, 0.7)',
-                  borderRadius: 3,
+                  borderRadius: 6,
                   justifyContent: 'center',
+                  width: window - 24,
                 }}>
                 <View
                   style={{
@@ -204,7 +204,6 @@ const FollowingFeed = () => {
                         width: 70,
                         height: 70,
                         resizeMode: 'cover',
-                        borderRadius: 2,
                         backgroundColor: '#1f1f1f',
                       }}
                       source={{uri: item.playlist_cover}}
@@ -215,7 +214,13 @@ const FollowingFeed = () => {
                         alignSelf: 'center',
                         paddingLeft: 10,
                       }}>
-                      <Text style={{color: 'white', fontSize: 13}}>
+                      <Text
+                        numberOfLines={2}
+                        style={{
+                          color: 'white',
+                          fontSize: 13,
+                          width: window / 2,
+                        }}>
                         {item.playlist_title}
                       </Text>
                       <Text
@@ -250,11 +255,9 @@ const FollowingFeed = () => {
         ) : (
           <View
             style={{
-              height: 240,
-              borderRadius: 3,
+              height: window,
               alignItems: 'center',
               justifyContent: 'flex-end',
-              paddingBottom: 5,
               backgroundColor: '#121212',
             }}
           />
@@ -266,22 +269,47 @@ const FollowingFeed = () => {
           alignItems: 'center',
           marginTop: 5,
           justifyContent: 'space-between',
+          paddingHorizontal: 12,
         }}>
         <View
           style={{
             flexDirection: 'column',
             alignSelf: 'center',
+            justifyContent: 'flex-start',
+            width: window - 24,
           }}>
           {!item?.description ? null : (
-            <Text
+            <View
               style={{
-                textAlign: 'left',
-                marginTop: 2,
-                color: 'lightgrey',
-                fontSize: 13,
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+                flex: 1,
               }}>
-              {item.description}
-            </Text>
+              {!item?.username ? null : (
+                <Pressable onPress={() => onUserPic(item)}>
+                  <Text
+                    style={{
+                      textAlign: 'left',
+                      marginTop: 2,
+                      color: 'white',
+                      fontSize: 13,
+                      fontWeight: '600',
+                      marginRight: 4,
+                    }}>
+                    {item.username}
+                  </Text>
+                </Pressable>
+              )}
+              <Text
+                style={{
+                  textAlign: 'left',
+                  marginTop: 2,
+                  color: 'white',
+                  fontSize: 13,
+                }}>
+                {item.description}
+              </Text>
+            </View>
           )}
           <Text
             style={{
@@ -300,13 +328,14 @@ const FollowingFeed = () => {
   return playlistContext?.state?.followingPlaylists ? (
     <SafeAreaView style={styles.screen}>
       <Header />
-      {playlistContext?.state?.followingPlaylists.length > 0 ? (
+      {playlistContext?.state?.followingPlaylists != 'null' ? (
         <View
           style={{
             alignItems: 'center',
             flex: 1,
           }}>
           <FlatList
+            initialNumToRender={10}
             showsVerticalScrollIndicator={false}
             data={playlistContext?.state?.followingPlaylists}
             renderItem={_renderItem}
@@ -339,7 +368,7 @@ const FollowingFeed = () => {
   ) : (
     <View
       style={{
-        backgroundColor: '#0C0C0C',
+        backgroundColor: 'black',
         flex: 1,
         justifyContent: 'center',
       }}></View>
@@ -348,7 +377,7 @@ const FollowingFeed = () => {
 
 const styles = StyleSheet.create({
   screen: {
-    backgroundColor: '#0C0C0C',
+    backgroundColor: 'black',
     alignItems: 'center',
     flex: 1,
   },

@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {Context as AuthContext} from '../../context/AuthContext';
-import Icon from 'react-native-vector-icons/FontAwesome';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {Context as PlaylistContext} from '../../context/PlaylistContext';
 import Toast from 'react-native-root-toast';
@@ -64,7 +63,9 @@ const SpotifyPlaylist = () => {
   };
 
   const renderSpotifyPlaylist = ({item}) => (
-    <Pressable onPress={() => playlistContext?.selectPlaylist(item)}>
+    <Pressable
+      style={{paddingTop: 12}}
+      onPress={() => playlistContext?.selectPlaylist(item)}>
       <View
         style={
           playlistContext?.state?.isSelected == item.id
@@ -77,21 +78,11 @@ const SpotifyPlaylist = () => {
               width: window / 2 - 30,
               height: window / 2 - 30,
               backgroundColor: '#1f1f1f',
-              borderRadius: 3,
             }}>
-            {playlistContext?.state?.isSelected !== item.id ? null : (
-              <Icon
-                name="check"
-                size={20}
-                color={'green'}
-                style={{position: 'absolute', top: 5, right: 5}}
-              />
-            )}
             <Image
               style={{
                 width: window / 2 - 30,
                 height: window / 2 - 30,
-                borderRadius: 2,
                 position: 'absolute',
               }}
               source={item.images}
@@ -136,7 +127,7 @@ const SpotifyPlaylist = () => {
         style={{
           flex: 1,
           justifyContent: 'center',
-          backgroundColor: '#0C0C0C',
+          backgroundColor: 'black',
           alignItems: 'center',
         }}>
         <ActivityIndicator size="small" />
@@ -146,7 +137,7 @@ const SpotifyPlaylist = () => {
 
   return (
     <SafeAreaView
-      style={StyleSheet.create({backgroundColor: '#0C0C0C', flex: 1})}>
+      style={StyleSheet.create({backgroundColor: 'black', flex: 1})}>
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack}>
           <View style={styles.icon_box}>
@@ -160,7 +151,7 @@ const SpotifyPlaylist = () => {
               style={{
                 fontSize: 14,
                 color: '#0C8ECE',
-                fontWeight: '500',
+                fontWeight: '600',
                 paddingRight: 5,
               }}>
               {'Save'}
@@ -176,6 +167,7 @@ const SpotifyPlaylist = () => {
           }}>
           <FlatList
             data={spotifyPlaylists}
+            initialNumToRender={10}
             extraData={selected_playlist}
             renderItem={renderSpotifyPlaylist}
             keyExtractor={item => item.id}
@@ -191,15 +183,15 @@ const styles = StyleSheet.create({
   header_text: {
     fontSize: 14,
     color: 'white',
-    fontWeight: '500',
+    fontWeight: '600',
   },
   header: {
     alignItems: 'center',
     height: 50,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    borderBottomWidth: 0.3,
-    borderBottomColor: '#1f1f1f',
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#121212',
   },
   icon_box: {
     height: 50,
@@ -208,9 +200,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   card_selected: {
-    marginTop: 2,
     marginHorizontal: 6,
-    marginBottom: 10,
     backgroundColor: '#202020',
     paddingVertical: 14,
     paddingHorizontal: 8,
@@ -219,9 +209,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   card_not_selected: {
-    marginTop: 2,
     marginHorizontal: 6,
-    marginBottom: 10,
     backgroundColor: '#151515',
     paddingVertical: 14,
     paddingHorizontal: 8,

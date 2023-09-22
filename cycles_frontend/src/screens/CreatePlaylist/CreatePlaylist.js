@@ -1,5 +1,4 @@
-import React, {useRef, useState, useContext, useEffect} from 'react';
-import ActionSheet from 'react-native-actionsheet';
+import React, {useState, useContext, useEffect} from 'react';
 import ImagePicker from 'react-native-image-crop-picker';
 import {
   StyleSheet,
@@ -33,10 +32,9 @@ const BACKEND_URL = envs.PROD_URL;
 
 const CreatePlaylist = () => {
   const window = Dimensions.get('window').width;
-  let actionSheet = useRef();
-  let optionArray = ['Spotify', 'Cancel'];
   const [toast, setToast] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [spotifyImage, setSpotifyImage] = useState(false);
   const navigation = useNavigation();
   const [images, setRenderImages] = useState([]);
   const [description, setDescription] = useState('');
@@ -45,7 +43,9 @@ const CreatePlaylist = () => {
   const selected_playlist = playlistContext?.state?.selectedSpotifyPlaylist;
   const getToken = async () => await RNSInfo.getItem('token', {});
   const continueDisabled =
-    !images || !selected_playlist || description.length < 1;
+    description.length < 1 ||
+    !selected_playlist ||
+    !(images.length >= 1 || spotifyImage);
 
   //Listen for Callback URL
   useEffect(() => {
@@ -68,40 +68,10 @@ const CreatePlaylist = () => {
     }
   }, [authContext?.state?.errorMessage]);
 
-  // Listen for playlist errors
-  useEffect(() => {
-    if (playlistContext?.state?.errorMessage) {
-      setToast(
-        Toast.show(playlistContext?.state?.errorMessage, {
-          duration: Toast.durations.SHORT,
-          position: Toast.positions.CENTER,
-          onHidden: () =>
-            playlistContext?.dispatch({type: 'clear_error_message'}),
-        }),
-      );
-    } else if (toast) {
-      Toast.hide(toast);
-    }
-  }, [playlistContext?.state?.errorMessage]);
-
   //  Listen for image updates
   useEffect(() => {
     images;
   }, [images]);
-
-  //Show action sheet
-  const showActionSheet = () => {
-    actionSheet.current.show();
-  };
-
-  //Choose or Spotify or Apple Music
-  const onActionSelect = index => {
-    if (index === 0) {
-      spotifyPlaylists();
-    } else if (index === 1) {
-      alert(optionArray[1]);
-    }
-  };
 
   //Pick images from gallery
   const pickGalleryImages = () => {
@@ -111,7 +81,7 @@ const CreatePlaylist = () => {
     ImagePicker.openPicker({
       multiple: true,
       mediaType: 'any',
-      maxFiles: 10,
+      maxFiles: 5,
       cropping: true,
     })
       .then(response => {
@@ -172,55 +142,50 @@ const CreatePlaylist = () => {
 
   //Post playlist to API
   const postPlaylist = async () => {
+    const token = await getToken();
     setLoading(true);
-    const post = await playlistContext.postPlaylist(selected_playlist, images);
-    if (post === 201) {
-      playlistContext?.clearSelectedPlaylist();
-      playlistContext?.getFollowersPlaylists();
-      setLoading(false);
-      navigation.navigate('FollowingFeed');
+    const formData = new FormData();
+    !spotifyImage
+      ? images.forEach(image => {
+          formData.append(`images`, {
+            uri: image,
+            type: 'image/jpeg',
+            name: image,
+          });
+        })
+      : formData.append('images', selected_playlist.images[0].url);
+    formData.append('description', description);
+    formData.append('playlist_url', selected_playlist.external_urls.spotify);
+    formData.append('playlist_ApiURL', selected_playlist.href);
+    formData.append('playlist_id', selected_playlist.id);
+    formData.append('playlist_cover', selected_playlist.images[0].url);
+    formData.append('playlist_title', selected_playlist.name);
+    formData.append('playlist_type', selected_playlist.type);
+    formData.append('playlist_uri', selected_playlist.uri);
+    formData.append('playlist_tracks', selected_playlist.tracks.href);
+    try {
+      const res = await fetch(`${BACKEND_URL}/feed/my-playlists/`, {
+        method: 'POST',
+        headers: {
+          Authorization: token,
+          Accept: 'application/json',
+          'Content-Type': 'multipart/form-data',
+        },
+        body: formData,
+      });
+      if (res.status === 201) {
+        setLoading(false);
+        playlistContext?.clearSelectedPlaylist();
+        playlistContext?.getFollowersPlaylists();
+        navigation.navigate('FollowingFeed');
+      }
+    } catch (e) {
+      authContext?.dispatch({
+        type: 'error_1',
+        payload: 'Something went wrong. Please try again.',
+      });
     }
     setLoading(false);
-    // const formData = new FormData();
-    // images.forEach(image => {
-    //   formData.append(`images`, {
-    //     uri: image,
-    //     type: 'image/jpeg',
-    //     name: image + selected_playlist.id,
-    //   });
-    // });
-    // formData.append('description', description);
-    // formData.append('playlist_url', selected_playlist.external_urls.spotify);
-    // formData.append('playlist_ApiURL', selected_playlist.href);
-    // formData.append('playlist_id', selected_playlist.id);
-    // formData.append('playlist_cover', selected_playlist.images[0].url);
-    // formData.append('playlist_title', selected_playlist.name);
-    // formData.append('playlist_type', selected_playlist.type);
-    // formData.append('playlist_uri', selected_playlist.uri);
-    // formData.append('playlist_tracks', selected_playlist.tracks.href);
-    // try {
-    //   const res = await fetch(`${BACKEND_URL}/feed/my-playlists/`, {
-    //     method: 'POST',
-    //     headers: {
-    //       Authorization: token,
-    //       Accept: 'application/json',
-    //       'Content-Type': 'multipart/form-data',
-    //     },
-    //     body: formData,
-    //   });
-    //   if (res.status === 201) {
-    //     setLoading(false);
-    //     playlistContext?.clearSelectedPlaylist();
-    //     playlistContext?.getFollowersPlaylists();
-    //     navigation.navigate('FollowingFeed');
-    //   }
-    // } catch (e) {
-    //   authContext?.dispatch({
-    //     type: 'error_1',
-    //     payload: 'Something went wrong. Please try again.',
-    //   });
-    // }
-    // setLoading(false);
   };
 
   //Navigate back to previous screen
@@ -229,29 +194,9 @@ const CreatePlaylist = () => {
     navigation.goBack(null);
   };
 
-  // // Function for loader
-  // if (loading) {
-  //   return (
-  //     <View
-  //       style={{
-  //         flex: 1,
-  //         justifyContent: 'center',
-  //         backgroundColor: 'rgba(12, 12, 12, 0.5)',
-  //         position: 'absolute',
-  //         top: 0,
-  //         bottom: 0,
-  //         left: 0,
-  //         right: 0,
-  //         alignItems: 'center',
-  //       }}>
-  //       <ActivityIndicator size="small" />
-  //     </View>
-  //   );
-  // }
-
   return (
     <SafeAreaView
-      style={StyleSheet.create({backgroundColor: '#0C0C0C', flex: 1})}>
+      style={StyleSheet.create({backgroundColor: 'black', flex: 1})}>
       <View style={styles.header}>
         <TouchableOpacity
           style={{
@@ -281,7 +226,20 @@ const CreatePlaylist = () => {
         </TouchableOpacity>
       </View>
       <KeyboardAwareScrollView>
-        <View style={{alignItems: 'center', height: window}}>
+        <View
+          style={{
+            alignItems: 'center',
+            height: window,
+          }}>
+          {!spotifyImage ? null : (
+            <View
+              style={{
+                position: 'absolute',
+                height: window,
+                backgroundColor: 'rgba(12, 12, 12, 0.7)',
+                width: window,
+              }}></View>
+          )}
           {images?.length > 0 ? (
             images?.length >= 1 ? (
               <FlatList
@@ -294,6 +252,7 @@ const CreatePlaylist = () => {
                 renderItem={item => {
                   return (
                     <Pressable
+                      disabled={spotifyImage}
                       onPress={pickGalleryImages}
                       style={{
                         height: window,
@@ -309,37 +268,102 @@ const CreatePlaylist = () => {
                           <Feather name="crop" size={15} color={'lightgrey'} />
                         </Pressable>
                       </ImageBackground>
+                      {!spotifyImage ? null : (
+                        <View
+                          style={{
+                            position: 'absolute',
+                            height: window,
+                            backgroundColor: 'rgba(12, 12, 12, 0.7)',
+                            width: window,
+                          }}></View>
+                      )}
                     </Pressable>
                   );
                 }}></FlatList>
             ) : (
-              <Pressable onPress={pickGalleryImages}>
+              <Pressable disabled={spotifyImage} onPress={pickGalleryImages}>
                 <Image style={{height: window}} source={images} />
+                {!spotifyImage ? null : (
+                  <View
+                    style={{
+                      position: 'absolute',
+                      height: window,
+                      backgroundColor: 'rgba(12, 12, 12, 0.7)',
+                      width: window,
+                    }}></View>
+                )}
               </Pressable>
             )
           ) : (
-            <Pressable
-              onPress={pickGalleryImages}
+            <View
               style={{
-                alignSelf: 'center',
-                justifyContent: 'center',
-                width: window,
-                height: window,
-                backgroundColor: '#1F1F1F',
-                alignItems: 'center',
-                flexDirection: 'row',
+                alignContent: 'flex-start',
+                justifyContent: 'flex-start',
               }}>
-              <View style={styles.camera_container}>
-                <Ionicons
-                  name="camera"
-                  size={10}
-                  color={'grey'}
-                  style={styles.camera_icon}
-                />
-              </View>
-            </Pressable>
+              <Pressable
+                disabled={spotifyImage}
+                onPress={pickGalleryImages}
+                style={{
+                  alignSelf: 'center',
+                  justifyContent: 'center',
+                  width: window,
+                  height: window,
+                  backgroundColor: '#121212',
+                  alignItems: 'center',
+                  flexDirection: 'row',
+                }}>
+                <View style={styles.camera_container}>
+                  <Ionicons
+                    name="camera"
+                    size={10}
+                    color={'grey'}
+                    style={styles.camera_icon}
+                  />
+                </View>
+              </Pressable>
+              {!spotifyImage ? null : (
+                <View
+                  style={{
+                    position: 'absolute',
+                    height: window,
+                    backgroundColor: 'rgba(12, 12, 12, 0.7)',
+                    width: window,
+                  }}></View>
+              )}
+            </View>
           )}
         </View>
+        <View
+          style={{
+            height: 80,
+            alignContent: 'center',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexDirection: 'row',
+            padding: 12,
+          }}>
+          <Text style={{fontSize: 13, color: 'white'}}>
+            Use Spotify playlist image
+          </Text>
+          <Pressable
+            onPress={() => setSpotifyImage(!spotifyImage)}
+            style={{
+              height: 30,
+              width: 55,
+              backgroundColor: spotifyImage ? 'green' : 'grey',
+              borderRadius: 30,
+            }}>
+            <View
+              style={{
+                height: 30,
+                width: 30,
+                borderRadius: 30,
+                backgroundColor: 'lightgrey',
+                alignSelf: spotifyImage ? 'flex-end' : 'flex-start',
+              }}></View>
+          </Pressable>
+        </View>
+        <Divider width={0.5} color="#1f1f1f" />
         {!selected_playlist ? (
           <TouchableHighlight onPress={() => authenticateSpotify()}>
             <View style={styles.uploadplaylist}>
@@ -372,7 +396,7 @@ const CreatePlaylist = () => {
             </View>
           </TouchableHighlight>
         )}
-        <Divider width={0.2} color="grey" />
+        <Divider width={0.5} color="#1f1f1f" />
         <View style={styles.description_container}>
           <TextInput
             multiline={true}
@@ -381,15 +405,8 @@ const CreatePlaylist = () => {
             onChangeText={setDescription}
             placeholder={'Title:'}
             selectionColor={'white'}
-            placeholderTextColor={'lightgrey'}
-            clearTextOnFocus={true}></TextInput>
+            placeholderTextColor={'lightgrey'}></TextInput>
         </View>
-        {/* <ActionSheet
-          ref={actionSheet}
-          options={optionArray}
-          cancelButtonIndex={2}
-          onPress={onActionSelect}
-        /> */}
       </KeyboardAwareScrollView>
       {loading == true ? (
         <View
@@ -414,19 +431,19 @@ const CreatePlaylist = () => {
 const styles = StyleSheet.create({
   share_text: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#0C8ECE',
     paddingHorizontal: 12,
   },
   disabled_share_text: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
     color: 'grey',
     paddingHorizontal: 12,
   },
   canceltext: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
     color: 'lightgrey',
     paddingHorizontal: 12,
   },
@@ -434,7 +451,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     alignSelf: 'center',
     color: 'white',
-    fontWeight: '500',
+    fontWeight: '600',
   },
   header: {
     height: 50,
@@ -487,7 +504,6 @@ const styles = StyleSheet.create({
   playlistimage: {
     height: 60,
     width: 60,
-    borderRadius: 3,
   },
   playlisttitle: {
     fontSize: 13,

@@ -7,7 +7,6 @@ from django.db import models
 class SpotifyToken(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
                              on_delete=models.CASCADE)
-    spotify_username = models.CharField(max_length=300, default='')
     access_token = models.CharField(max_length=300)
     refresh_token = models.CharField(max_length=300)
     expires_in = models.DateTimeField(max_length=300)

@@ -14,8 +14,6 @@ import requests
 # Create your views here.
 
 # (Post/Update) & Delete fcmToken
-
-
 class fcmTokenView(APIView):
     serializer_class = fcmTokenSerializer
     queryset = fcmToken.objects.all()

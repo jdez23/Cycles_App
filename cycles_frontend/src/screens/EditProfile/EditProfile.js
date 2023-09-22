@@ -61,64 +61,91 @@ const EditProfile = ({route}) => {
 
   //Pick header image
   const pickHeaderImage = () => {
-    ImagePicker.openPicker({
-      multiple: false,
-    })
-      .then(header_image => {
-        ImagePicker.openCropper({
-          path: header_image.path,
-          width: window,
-          height: 200,
-        })
-          .then(image => {
-            setHeaderPic(image.path);
-          })
-          .catch(() => null);
+    try {
+      ImagePicker.openPicker({
+        multiple: false,
+        mediaType: 'photo',
       })
-      .catch(() => null);
+        .then(header_image => {
+          ImagePicker.openCropper({
+            path: header_image.path,
+            width: window,
+            height: 200,
+            compressImageQuality: 1,
+            compressImageMaxHeight: 200,
+            compressImageMaxWidth: window,
+            cropping: true,
+          })
+            .then(image => {
+              setHeaderPic(image.path);
+            })
+            .catch(() => null);
+        })
+        .catch(() => null);
+    } catch {
+      null;
+    }
   };
 
   //Pick avi image
   const pickAviImage = () => {
-    ImagePicker.openPicker({
-      multiple: false,
-    })
-      .then(avi_image => {
-        ImagePicker.openCropper({
-          cropperCircleOverlay: true,
-          path: avi_image.path,
-          width: 70,
-          height: 70,
-          compressImageQuality: true,
-        }).then(image => {
-          setAviPic(image.path);
-        });
+    try {
+      ImagePicker.openPicker({
+        multiple: false,
+        mediaType: 'photo',
       })
-      .catch(() => null);
+        .then(avi_image => {
+          ImagePicker.openCropper({
+            cropperCircleOverlay: true,
+            path: avi_image.path,
+            width: 70,
+            height: 70,
+            compressImageQuality: true,
+          }).then(image => {
+            setAviPic(image.path);
+          });
+        })
+        .catch(() => null);
+    } catch {
+      null;
+    }
   };
 
   //Update Profile to API
   const updateProfile = async () => {
     setLoading(true);
+    const currentUser = await getCurrentUser();
+    const token = await getToken();
     const formData = new FormData();
+    new_header_pic != null
+      ? formData.append('header_pic', {
+          uri: new_header_pic,
+          type: 'image/jpeg',
+          name: new_header_pic,
+        })
+      : null;
+    formData.append('avi_pic', {
+      uri: new_avi_pic,
+      type: 'image/jpeg',
+      name: new_avi_pic,
+    });
+    formData.append('name', new_name);
+    formData.append('username', new_username);
+    formData.append('location', new_location);
+    formData.append('bio', new_bio);
+    formData.append('spotify_url', new_spotify_url);
     try {
-      formData.append('header_pic', {
-        uri: data.new_header_pic,
-        type: 'image/jpeg',
-        name: data.new_header_pic,
-      });
-      formData.append('avi_pic', {
-        uri: new_avi_pic,
-        type: 'image/jpeg',
-        name: new_avi_pic,
-      });
-      formData.append('name', data.new_name);
-      formData.append('username', data.new_username);
-      formData.append('location', data.new_location);
-      formData.append('bio', data.new_bio);
-      formData.append('spotify_url', data.new_spotify_url);
-      const res = await authContext.updateProfile(formData);
-      if (res === 200) {
+      const res = await axios.put(
+        `${BACKEND_URL}/users/user/${currentUser}/`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: token,
+          },
+        },
+      );
+      if (res.status === 200) {
         setLoading(false);
         navigation.navigate('MyProfile');
       }
@@ -128,52 +155,12 @@ const EditProfile = ({route}) => {
         payload: 'Something went wrong. Please try again.',
       });
     }
-    setLoading(true);
-    // const currentUser = await getCurrentUser();
-    // const token = await getToken();
-    // const formData = new FormData();
-    // formData.append('header_pic', {
-    //   uri: new_header_pic,
-    //   type: 'image/jpeg',
-    //   name: new_header_pic,
-    // });
-    // formData.append('avi_pic', {
-    //   uri: new_avi_pic,
-    //   type: 'image/jpeg',
-    //   name: new_avi_pic,
-    // });
-    // formData.append('name', new_name);
-    // formData.append('username', new_username);
-    // formData.append('location', new_location);
-    // formData.append('bio', new_bio);
-    // formData.append('spotify_url', new_spotify_url);
-    // try {
-    //   const res = await axios.put(
-    //     `${BACKEND_URL}/users/user/${currentUser}/`,
-    //     formData,
-    //     {
-    //       headers: {
-    //         'Content-Type': 'multipart/form-data',
-    //         Authorization: token,
-    //       },
-    //     },
-    //   );
-    //   if (res.status === 200) {
-    //     setLoading(false);
-    //     navigation.navigate('MyProfile');
-    //   }
-    // } catch (e) {
-    //   authContext?.dispatch({
-    //     type: 'error_1',
-    //     payload: 'Something went wrong. Please try again.',
-    //   });
-    // }
-    // setLoading(false);
+    setLoading(false);
   };
 
   return (
     <SafeAreaView
-      style={StyleSheet.create({backgroundColor: '#0C0C0C', flex: 1})}>
+      style={StyleSheet.create({backgroundColor: 'black', flex: 1})}>
       <View style={styles.container}>
         <TouchableOpacity onPress={onBack}>
           <View
@@ -212,7 +199,11 @@ const EditProfile = ({route}) => {
             <View
               style={{height: 200, width: window, backgroundColor: '#1f1f1f'}}>
               <Image
-                style={{height: 200, width: window, backgroundColor: '#1f1f1f'}}
+                style={{
+                  height: 200,
+                  width: window,
+                  backgroundColor: '#1f1f1f',
+                }}
                 source={{uri: new_header_pic}}
               />
               <View
@@ -261,8 +252,8 @@ const EditProfile = ({route}) => {
           )}
         </Pressable>
         <View
-          borderBottomWidth={0.3}
-          borderBottomColor={'#262626'}
+          borderBottomWidth={0.5}
+          borderBottomColor={'#1f1f1f'}
           style={{
             alignSelf: 'center',
             justifyContent: 'center',
@@ -336,8 +327,8 @@ const EditProfile = ({route}) => {
         <View style={{paddingHorizontal: 12, bottom: 13}}>
           <View
             style={{
-              borderBottomWidth: 0.3,
-              borderBottomColor: '#262626',
+              borderBottomWidth: 0.5,
+              borderBottomColor: '#1f1f1f',
               height: 60,
               justifyContent: 'flex-start',
               flexDirection: 'row',
@@ -359,7 +350,6 @@ const EditProfile = ({route}) => {
                 fontSize: 14,
                 width: 200,
               }}
-              clearTextOnFocus={true}
               numberOfLines={1}
               value={new_name === 'null' ? null : new_name}
               onChangeText={setName}
@@ -368,8 +358,8 @@ const EditProfile = ({route}) => {
           </View>
           <View
             style={{
-              borderBottomWidth: 0.3,
-              borderBottomColor: '#262626',
+              borderBottomWidth: 0.5,
+              borderBottomColor: '#1f1f1f',
               height: 60,
               justifyContent: 'flex-start',
               flexDirection: 'row',
@@ -387,7 +377,6 @@ const EditProfile = ({route}) => {
             </Text>
             <TextInput
               style={{color: 'white', fontSize: 14, width: 200}}
-              clearTextOnFocus={true}
               value={new_username === 'null' ? null : new_username}
               numberOfLines={1}
               onChangeText={setUsername}
@@ -396,8 +385,8 @@ const EditProfile = ({route}) => {
           </View>
           <View
             style={{
-              borderBottomWidth: 0.3,
-              borderBottomColor: '#262626',
+              borderBottomWidth: 0.5,
+              borderBottomColor: '#1f1f1f',
               height: 60,
               justifyContent: 'flex-start',
               flexDirection: 'row',
@@ -415,7 +404,6 @@ const EditProfile = ({route}) => {
             </Text>
             <TextInput
               style={{color: 'white', fontSize: 14, width: 200}}
-              clearTextOnFocus={true}
               value={new_location === 'null' ? null : new_location}
               numberOfLines={1}
               onChangeText={setLocation}
@@ -424,8 +412,8 @@ const EditProfile = ({route}) => {
           </View>
           <View
             style={{
-              borderBottomWidth: 0.3,
-              borderBottomColor: '#262626',
+              borderBottomWidth: 0.5,
+              borderBottomColor: '#1f1f1f',
               height: 60,
               justifyContent: 'flex-start',
               flexDirection: 'row',
@@ -443,7 +431,6 @@ const EditProfile = ({route}) => {
             </Text>
             <TextInput
               style={{color: 'white', fontSize: 14, width: 200}}
-              clearTextOnFocus={true}
               value={new_bio === 'null' ? null : new_bio}
               onChangeText={setBio}
               numberOfLines={1}
@@ -452,8 +439,8 @@ const EditProfile = ({route}) => {
           </View>
           <View
             style={{
-              borderBottomWidth: 0.3,
-              borderBottomColor: '#262626',
+              borderBottomWidth: 0.5,
+              borderBottomColor: '#1f1f1f',
               height: 60,
               justifyContent: 'flex-start',
               flexDirection: 'row',
@@ -475,7 +462,6 @@ const EditProfile = ({route}) => {
                 fontSize: 14,
                 width: 235,
               }}
-              clearTextOnFocus={true}
               value={new_spotify_url === 'null' ? null : new_spotify_url}
               onChangeText={setSpotifyLink}
               placeholder={'Spotify link'}
@@ -506,7 +492,7 @@ const EditProfile = ({route}) => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#0C0C0C',
+    backgroundColor: 'black',
     height: 50,
     alignItems: 'center',
     flexDirection: 'row',
@@ -515,12 +501,12 @@ const styles = StyleSheet.create({
   textUser: {
     fontSize: 14,
     color: 'white',
-    fontWeight: '500',
+    fontWeight: '600',
     paddingHorizontal: 12,
   },
   canceltext: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
     color: 'lightgrey',
     paddingLeft: 12,
   },

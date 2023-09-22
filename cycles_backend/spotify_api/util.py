@@ -57,7 +57,6 @@ def is_spotify_authenticated(user):
 
 def refresh_spotify_token(user):
     refresh_token = get_user_tokens(user).refresh_token
-    spotify_username = get_user_tokens(user).spotify_username
 
     response = post('https://accounts.spotify.com/api/token', data={
         'grant_type': 'refresh_token',
@@ -71,7 +70,7 @@ def refresh_spotify_token(user):
     token_type = response.get('token_type')
 
     update_or_create_user_tokens(
-        user, spotify_username, access_token, refresh_token, expires_in, token_type)
+        user, access_token, refresh_token, expires_in, token_type)
 
 
 def execute_spotify_api_request(user, endpoint, post_=False):
@@ -82,6 +81,21 @@ def execute_spotify_api_request(user, endpoint, post_=False):
         response = post(BASE_URL + endpoint, headers=headers)
     else:
         response = get(BASE_URL + endpoint, {}, headers=headers)
+
+    try:
+        return response.json()
+    except:
+        return {'Error': 'Issue with request'}
+
+
+def execute_spotify_playlist_request(user, endpoint, params, post_=False):
+    access_token = get_user_tokens(user).access_token
+    headers = {'Authorization': "Bearer " + access_token}
+
+    if post_:
+        response = post(BASE_URL + endpoint, headers=headers)
+    else:
+        response = get(BASE_URL + endpoint, params=params, headers=headers)
 
     try:
         return response.json()

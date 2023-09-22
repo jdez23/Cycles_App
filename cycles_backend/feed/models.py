@@ -8,11 +8,6 @@ from users.models import User
 
 # Create your models here.
 
-
-# def playlistCoverFile(instance, filename):
-#     return 'media/playlist_images/{filename}'.format(filename=filename)
-
-
 class Playlist(models.Model):
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, default=None
@@ -29,8 +24,6 @@ class Playlist(models.Model):
     playlist_tracks = models.CharField(
         max_length=300, default=None, blank=True)
     date = models.DateTimeField(editable=False, auto_now_add=True)
-    # hashtags = models.CharField(max_length=250, blank=True)
-    # comments_off = models.BooleanField(default=False)
 
 
 class PlaylistTracks(models.Model):
